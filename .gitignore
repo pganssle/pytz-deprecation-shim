@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs
+
+# Sphinx documentation
+docs/_build/
+docs/_output/
+
+# Testing and coverage
+.cache
+.hypothesis_cache
+.hypothesis
+.mypy_cache
+.pytest_cache
+.tox
+.pytype
+*.gcda
+*.gcno
+*.gcov
+
+# Virtual environments
+venv/
+.venv/
