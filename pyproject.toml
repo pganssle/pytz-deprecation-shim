@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 80
+
+[tool.coverage.paths]
+source = ["src", ".tox/*/site-packages"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.isort]
+atomic=true
+force_grid_wrap=0
+include_trailing_comma=true
+known_first_party = ["pytz_deprecation_shim"]
+known_third_party=[
+    "dateutil",
+    "hypothesis",
+    "pytest",
+    "pytz",
+]
+multi_line_output=3
+not_skip="__init__.py"
+use_parentheses=true
+
+[tool.pylint.'MESSAGES CONTROL']
+disable="all"
+enable="""
+    unused-import,
+    unused-variable,
+    unpacking-non-sequence,
+    invalid-all-object,
+    used-before-assignment,
+    no-else-raise,
+    bad-format-character,
+    bad-format-string,
+    bare-except,
+"""
