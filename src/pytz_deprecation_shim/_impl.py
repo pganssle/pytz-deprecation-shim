@@ -148,13 +148,13 @@ class _BasePytzShimTimezone(tzinfo):
 class _PytzShimTimezone(_BasePytzShimTimezone):
     def __init__(self, key):
         zone = _compat.get_timezone(key)
-        super().__init__(zone=zone, key=key)
+        super(_PytzShimTimezone, self).__init__(zone=zone, key=key)
 
 
 class _FixedOffsetShim(_BasePytzShimTimezone):
     def __init__(self, offset):
         zone = _compat.get_fixed_offset_zone(offset)
-        super().__init__(zone=zone, key=None)
+        super(_FixedOffsetShim, self).__init__(zone=zone, key=None)
 
 
 UTC = _BasePytzShimTimezone(_compat.UTC, "UTC")
