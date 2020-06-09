@@ -16,6 +16,5 @@ from ._exceptions import (
     PytzUsageWarning,
 )
 from ._impl import UTC, fixed_offset_timezone, timezone
-from ._version import __version__
 
 FixedOffset = fixed_offset_timezone  # For compatibility
