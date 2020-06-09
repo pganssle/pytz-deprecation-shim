@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta
 
 import hypothesis
@@ -7,6 +8,8 @@ from hypothesis import strategies as hst
 
 import pytz_deprecation_shim as pds
 from pytz_deprecation_shim import PytzUsageWarning
+
+PY2 = sys.version_info[0] == 2
 
 VALID_ZONES = sorted(pytz.all_timezones)
 
@@ -61,13 +64,38 @@ def test_localize_explicit_is_dst(dt, key, is_dst):
     assert_localized_equivalent(dt_shim, dt_pytz)
 
 
+def _dublin_examples():
+    if PY2:
+
+        def _(f):
+            return f
+
+    else:
+
+        def _(f):
+            examples = [
+                hypothesis.example(
+                    dt=datetime(2018, 3, 25, 1, 30), key="Europe/Dublin"
+                ),
+                hypothesis.example(
+                    dt=datetime(2018, 10, 28, 1, 30), key="Europe/Dublin"
+                ),
+            ]
+
+            f_out = f
+            for example in examples:
+                f_out = example(f_out)
+            return f_out
+
+    return _
+
+
 @hypothesis.given(dt=dt_strategy, key=valid_zone_strategy)
 @hypothesis.example(dt=datetime(2018, 3, 25, 1, 30), key="Europe/London")
 @hypothesis.example(dt=datetime(2018, 10, 28, 1, 30), key="Europe/London")
-@hypothesis.example(dt=datetime(2018, 3, 25, 1, 30), key="Europe/Dublin")
-@hypothesis.example(dt=datetime(2018, 10, 28, 1, 30), key="Europe/Dublin")
 @hypothesis.example(dt=datetime(2004, 4, 4, 2, 30), key="America/New_York")
 @hypothesis.example(dt=datetime(2004, 10, 31, 1, 30), key="America/New_York")
+@_dublin_examples()
 def test_localize_is_dst_none(dt, key):
     pytz_zone = pytz.timezone(key)
     shim_zone = pds.timezone(key)
@@ -100,9 +128,10 @@ def round_timedelta(td, nearest=timedelta(minutes=1)):
     if td == ZERO:
         return td
 
-    sign = td / abs(td)
-    nearest *= sign
-    return nearest * round(td / nearest)
+    tds = td.total_seconds()
+    sign = tds / abs(tds)
+    nearest *= int(sign)
+    return nearest * int(round(tds / nearest.total_seconds()))
 
 
 def round_normalized(dt):
@@ -146,6 +175,13 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     uz = pds._compat.get_timezone(key)
     ###########
     # One-offs
+    if PY2:
+        # https://github.com/dateutil/dateutil/issues/1048
+        hypothesis.assume(
+            uz.dst(dt)
+            or not ((uz.dst(dt + timedelta(hours=24)) or ZERO) < ZERO)
+        )
+
     # bpo-40930: https://bugs.python.org/issue40930
     hypothesis.assume(
         not (
@@ -186,9 +222,10 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     # bpo-40931: https://bugs.python.org/issue40931
     pz = pytz.timezone(key)
     dt_pytz = pz.localize(dt, is_dst=is_dst)
-    dt_uz = dt.replace(fold=not is_dst, tzinfo=uz)
-    if abs(dt_pytz.dst() <= timedelta(hours=1)) and abs(
-        dt_uz.dst()
+    dt_uz = dt.replace(tzinfo=uz)
+    dt_uz = pds._compat.enfold(dt_uz, fold=not is_dst)
+    if abs(dt_pytz.dst()) <= timedelta(hours=1) and abs(
+        dt_uz.dst() or timedelta(0)
     ) <= timedelta(hours=1):
         return
 
