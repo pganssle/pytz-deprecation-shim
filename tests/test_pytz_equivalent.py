@@ -10,6 +10,16 @@ from hypothesis import strategies as hst
 import pytz_deprecation_shim as pds
 from pytz_deprecation_shim import PytzUsageWarning
 
+# Opportunistically bring in lru_cache, with a no-op if it's unavailable
+# available
+try:
+    from functools import lru_cache
+except ImportError:
+
+    def lru_cache(f):
+        return f
+
+
 PY2 = sys.version_info[0] == 2
 
 VALID_ZONES = sorted(pytz.all_timezones)
@@ -183,6 +193,7 @@ def test_normalize_same_zone(dt, delta, key):
 
 
 # Helper functions
+@lru_cache
 def round_timedelta(td):
     """Truncates a timedelta to the nearest minute."""
     if td == ZERO:
