@@ -282,6 +282,14 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
             )
         )
 
+        # Possibly another manifestation of dateutil/dateutil#1050
+        hypothesis.assume(
+            not (
+                key == "MET"
+                and datetime(1916, 5, 1) <= dt <= datetime(1916, 10, 2)
+            )
+        )
+
     # bpo-40930: https://bugs.python.org/issue40930
     hypothesis.assume(
         not (
@@ -323,8 +331,22 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     # 1974, but `pytz` returns timedelta(0) for CDT.
     hypothesis.assume(
         not (
-            key == "America/Louisville"
+            (
+                key == "America/Louisville"
+                or key == "America/Kentucky/Louisville"
+            )
             and datetime(1974, 1, 6) <= dt <= datetime(1974, 10, 28)
+        )
+    )
+
+    # Issue with pytz: Europe/Paris went from CEST (+2, STD) → CEST (+2, DST) →
+    # WEMT (+2, DST) → WEST (+1, DST) → WEMT (+2, DST) → CET (+1, STD) between
+    # 3 April 1944 and 16 September 1945. pytz doesn't detect that WEMT is a
+    # DST zone, though.
+    hypothesis.assume(
+        not (
+            key == "Europe/Paris"
+            and datetime(1944, 10, 8) <= dt <= datetime(1945, 4, 3)
         )
     )
 
