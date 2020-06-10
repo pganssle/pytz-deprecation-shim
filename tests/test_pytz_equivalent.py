@@ -17,6 +17,7 @@ from ._common import (
     assert_dt_equivalent,
     dt_strategy,
     enfold,
+    offset_minute_strategy,
     round_timedelta,
     valid_zone_strategy,
 )
@@ -194,6 +195,19 @@ def test_normalize_same_zone(dt, delta, key):
     assert dt_shim_after_nn is dt_shim_after
     assume_no_dst_inconsistency_bug(dt + delta, key)
     assert_dt_equivalent(dt_pytz_after, dt_shim_after, round_dates=True)
+
+
+@hypothesis.given(dt=dt_strategy, offset=offset_minute_strategy)
+def test_localize_fixed_offset(dt, offset):
+    pytz_zone = pytz.FixedOffset(offset)
+    shim_zone = pds.fixed_offset_timezone(offset)
+
+    dt_pytz = pytz_zone.localize(dt)
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_shim = shim_zone.localize(dt)
+
+    assert dt_pytz == dt_shim
+    assert dt_pytz.utcoffset() == dt_shim.utcoffset()
 
 
 @hypothesis.given(key=valid_zone_strategy)

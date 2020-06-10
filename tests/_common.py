@@ -32,9 +32,14 @@ EPOCHALYPSE = datetime(2038, 1, 18, 22, 14, 8)
 MIN_DATETIME = NEGATIVE_EPOCHALYPSE + timedelta(days=365)
 MAX_DATETIME = EPOCHALYPSE - timedelta(days=365)
 
+MAX_OFFSET_MINUTES = 24 * 60 - 1  # pytz's range is (-1 day, 1 day)
+
 valid_zone_strategy = hst.sampled_from(VALID_ZONES)
 invalid_zone_strategy = hst.text().filter(lambda t: t not in VALID_ZONE_SET)
 dt_strategy = hst.datetimes(min_value=MIN_DATETIME, max_value=MAX_DATETIME)
+offset_minute_strategy = hst.integers(
+    min_value=-MAX_OFFSET_MINUTES, max_value=MAX_OFFSET_MINUTES
+)
 
 
 # Helper functions
