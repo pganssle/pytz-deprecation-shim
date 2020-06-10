@@ -22,9 +22,6 @@ def timezone(key, _cache={}):
 
 
 def fixed_offset_timezone(offset, _cache={}):
-    if offset == 0:
-        return UTC
-
     instance = _cache.get(offset, None)
     if instance is None:
         if offset == 0:
