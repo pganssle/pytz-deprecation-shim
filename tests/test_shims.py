@@ -1,9 +1,20 @@
+from datetime import timedelta
+
 import hypothesis
+import hypothesis.strategies as hst
 import pytest
+import pytz
 
 import pytz_deprecation_shim as pds
 
-from ._common import assert_dt_equivalent, dt_strategy, valid_zone_strategy
+from ._common import (
+    MAX_DATETIME,
+    MIN_DATETIME,
+    assert_dt_equivalent,
+    dt_strategy,
+    round_normalized,
+    valid_zone_strategy,
+)
 
 
 @hypothesis.given(key=valid_zone_strategy)
@@ -30,3 +41,35 @@ def test_localize_default_is_dst(dt, key):
 
     dt_replaced = dt.replace(tzinfo=shim_zone)
     assert_dt_equivalent(dt_localized, dt_replaced)
+
+
+@hypothesis.given(
+    dt=dt_strategy,
+    delta=hst.timedeltas(
+        min_value=timedelta(days=-730), max_value=timedelta(days=730)
+    ),
+    key=valid_zone_strategy,
+)
+def test_normalize_pytz_zone(dt, delta, key):
+    """Test that pds.normalize works on pytz-zoned datetimes.
+
+    This allows you to take a zone you've normalized via pytz and convert
+    it to the shim zone.
+    """
+    pytz_zone = pytz.timezone(key)
+    shim_zone = pds.timezone(key)
+
+    dt_pytz = pytz_zone.localize(dt) + delta
+    dt_pytz_normalized = pytz_zone.normalize(dt_pytz)
+
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_shim = shim_zone.normalize(dt_pytz)
+
+    rounded_shim = round_normalized(dt_shim)
+    rounded_pytz = round_normalized(dt_pytz_normalized)
+
+    rounded_shim_naive = rounded_shim.replace(tzinfo=None)
+    rounded_pytz_naive = rounded_pytz.replace(tzinfo=None)
+
+    hypothesis.assume(MIN_DATETIME <= rounded_shim_naive <= MAX_DATETIME)
+    assert rounded_shim_naive == rounded_pytz_naive
