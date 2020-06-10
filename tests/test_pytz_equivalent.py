@@ -77,6 +77,22 @@ def _conditional_examples(cond, examples):
 @hypothesis.given(
     dt=dt_strategy, key=valid_zone_strategy, is_dst=hst.booleans()
 )
+@hypothesis.example(
+    dt=enfold(datetime(2010, 11, 7, 1, 30), fold=1),
+    key="America/New_York",
+    is_dst=True,
+)
+@hypothesis.example(
+    dt=enfold(datetime(2010, 11, 7, 1, 30), fold=1),
+    key="America/New_York",
+    is_dst=False,
+)
+@hypothesis.example(
+    dt=datetime(2010, 11, 7, 1, 30), key="America/New_York", is_dst=True
+)
+@hypothesis.example(
+    dt=datetime(2010, 11, 7, 1, 30), key="America/New_York", is_dst=False
+)
 @_conditional_examples(
     not PY2,
     [
