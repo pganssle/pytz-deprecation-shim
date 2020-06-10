@@ -227,6 +227,22 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
             or not ((uz.dst(dt + timedelta(hours=24)) or ZERO) < ZERO)
         )
 
+        # https://github.com/dateutil/dateutil/issues/1049
+        hypothesis.assume(
+            not (
+                key == "Asia/Colombo"
+                and datetime(1942, 1, 5) <= dt <= datetime(1945, 10, 17)
+            )
+        )
+
+        # https://github.com/dateutil/dateutil/issues/1050
+        hypothesis.assume(
+            not (
+                key == "America/Iqaluit"
+                and datetime(1942, 7, 31) <= dt <= datetime(1945, 10, 1)
+            )
+        )
+
     # bpo-40930: https://bugs.python.org/issue40930
     hypothesis.assume(
         not (
@@ -238,7 +254,10 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     hypothesis.assume(
         not (
             key == "America/Montevideo"
-            and datetime(1923, 1, 1) <= dt <= datetime(1927, 1, 1)
+            and (
+                datetime(1923, 1, 1) <= dt <= datetime(1927, 1, 1)
+                or datetime(1942, 12, 14) <= dt <= datetime(1943, 3, 13)
+            )
             and uz.dst(dt)
         )
     )
@@ -258,6 +277,15 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
         not (
             key == "Europe/Minsk"
             and datetime(1941, 6, 27) <= dt <= datetime(1943, 3, 30)
+        )
+    )
+
+    # Issue with pytz: America/Louisville transitioned from EST→CDT→EST in
+    # 1974, but `pytz` returns timedelta(0) for CDT.
+    hypothesis.assume(
+        not (
+            key == "America/Louisville"
+            and datetime(1974, 1, 6) <= dt <= datetime(1974, 10, 28)
         )
     )
 
