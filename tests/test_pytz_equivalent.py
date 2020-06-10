@@ -348,8 +348,18 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
             (
                 key == "America/Louisville"
                 or key == "America/Kentucky/Louisville"
+                or key == "America/Indiana/Marengo"
             )
             and datetime(1974, 1, 6) <= dt <= datetime(1974, 10, 28)
+        )
+    )
+
+    # Same deal with the RussiaAsia rule in 1991, a transition to DST with no
+    # corresponding change in the offset, then a transition bac
+    hypothesis.assume(
+        not (
+            key == "Asia/Qyzylorda"
+            and datetime(1991, 3, 31) <= dt <= datetime(1991, 9, 30)
         )
     )
 
