@@ -15,13 +15,16 @@ PY2 = sys.version_info[0] == 2
 VALID_ZONES = sorted(pytz.all_timezones)
 
 NEGATIVE_EPOCHALYPSE = datetime(1901, 12, 13, 15, 45, 52)
-NEGATIVE_EPOCHALYPSE = datetime(1912, 1, 1)
 EPOCHALYPSE = datetime(2038, 1, 18, 22, 14, 8)
 
+# There will be known inconsistencies between pytz and the other libraries
+# right around the EPOCHALYPSE, because V1 files use 32-bit integers, and
+# pytz does not support V2+ files.
+MIN_DATETIME = NEGATIVE_EPOCHALYPSE + timedelta(days=365)
+MAX_DATETIME = EPOCHALYPSE - timedelta(days=365)
+
 valid_zone_strategy = hst.sampled_from(VALID_ZONES)
-dt_strategy = hst.datetimes(
-    min_value=NEGATIVE_EPOCHALYPSE, max_value=EPOCHALYPSE
-)
+dt_strategy = hst.datetimes(min_value=MIN_DATETIME, max_value=MAX_DATETIME)
 ZERO = timedelta(0)
 
 _ARGENTINA_CITIES = [
@@ -152,9 +155,7 @@ def test_normalize_same_zone(dt, delta, key):
     dt_shim_after_nn = (dt_shim.astimezone(UTC) + delta).astimezone(shim_zone)
 
     hypothesis.assume(
-        NEGATIVE_EPOCHALYPSE
-        < dt_pytz_after_nn.replace(tzinfo=None)
-        < EPOCHALYPSE
+        MIN_DATETIME < dt_pytz_after_nn.replace(tzinfo=None) < MAX_DATETIME
     )
 
     dt_pytz_after = pytz_zone.normalize(dt_pytz_after_nn)
