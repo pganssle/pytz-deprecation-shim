@@ -24,7 +24,22 @@ jobs:
       run: |
         python -m pip install --upgrade pip tox
     - name: Run tests
+      shell: bash
       run: |
+        tz_path_options=('/usr/share/zoneinfo' \
+                         '/usr/lib/zoneinfo' \
+                         '/usr/share/lib/zoneinfo' \
+                         '/etc/zoneinfo')
+        for option in ${tz_path_options[@]}; do
+          if [[ -d "$option" ]]; then
+            export PYTZ_TZDATADIR="$option"
+            export PYTHONTZPATH="$option"
+            break
+          fi
+        done
+
+        echo "PYTZ_TZDATADIR: $PYTZ_TZDATADIR"
+        echo "PYTHONTZPATH: $PYTHONTZPATH"
         python -m tox
     - name: Report coverage
       run: |
