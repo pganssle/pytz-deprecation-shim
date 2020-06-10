@@ -17,6 +17,8 @@ from ._common import (
     valid_zone_strategy,
 )
 
+enfold = pds._compat.enfold
+
 # Opportunistically bring in lru_cache, with a no-op if it's unavailable
 # available
 try:
@@ -134,7 +136,7 @@ def test_localize_is_dst_none(dt, key):
         hypothesis.assume(utc_off == round_timedelta(utc_off))
 
         utc_off_folded = uz.utcoffset(
-            pds._compat.enfold(dt, fold=not pds._compat.get_fold(dt))
+            enfold(dt, fold=not pds._compat.get_fold(dt))
         )
         hypothesis.assume(utc_off_folded == round_timedelta(utc_off_folded))
 
@@ -233,7 +235,7 @@ def round_normalized(dt):
         new_dt = dt + (rounded_offset - offset)
     else:
         new_dt = dt
-    return pds._compat.enfold(new_dt, fold=dt.fold)
+    return enfold(new_dt, fold=dt.fold)
 
 
 def assert_rounded_equal(actual, expected, **kwargs):
@@ -393,7 +395,7 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     pz = pytz.timezone(key)
     dt_pytz = pz.localize(dt, is_dst=is_dst)
     dt_uz = dt.replace(tzinfo=uz)
-    dt_uz = pds._compat.enfold(dt_uz, fold=not is_dst)
+    dt_uz = enfold(dt_uz, fold=not is_dst)
     if abs(dt_pytz.dst()) <= timedelta(hours=1) and abs(
         dt_uz.dst() or timedelta(0)
     ) <= timedelta(hours=1):
