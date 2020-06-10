@@ -118,6 +118,17 @@ def test_localize_is_dst_none(dt, key):
         except pds.InvalidTimeError as e:
             shim_exc = e
 
+    if (dt_pytz is None) != (dt_shim is None):
+        uz = pds._compat.get_timezone(key)
+
+        utc_off = uz.utcoffset(dt)
+        hypothesis.assume(utc_off == round_timedelta(utc_off))
+
+        utc_off_folded = uz.utcoffset(
+            pds._compat.enfold(dt, fold=not pds._compat.get_fold(dt))
+        )
+        hypothesis.assume(utc_off_folded == round_timedelta(utc_off_folded))
+
     if dt_pytz:
         assume_no_dst_inconsistency_bug(dt, key, is_dst=False)
         assert_dt_equivalent(dt_pytz, dt_shim)
@@ -163,6 +174,9 @@ def test_normalize_same_zone(dt, delta, key):
     with pytest.warns(PytzUsageWarning):
         dt_shim_after = shim_zone.normalize(dt_shim_after_nn)
 
+    hypothesis.assume(
+        dt_shim_after.utcoffset() == round_timedelta(dt_shim_after.utcoffset())
+    )
     assert dt_shim_after_nn is dt_shim_after
     assume_no_dst_inconsistency_bug(dt + delta, key)
     assert_dt_equivalent(dt_pytz_after, dt_shim_after, round_dates=True)
