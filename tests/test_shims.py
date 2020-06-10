@@ -17,6 +17,11 @@ from ._common import (
 )
 
 
+def test_fixed_offset_utc():
+    """Tests that fixed_offset_timezone(0) always returns UTC."""
+    assert pds.fixed_offset_timezone(0) is pds.UTC
+
+
 @hypothesis.given(key=valid_zone_strategy)
 def test_timezone_repr(key):
     zone = pds.timezone(key)
