@@ -67,7 +67,7 @@ def test_localize_explicit_is_dst(dt, key, is_dst):
         dt_shim = shim_zone.localize(dt, is_dst=is_dst)
 
     assume_no_dst_inconsistency_bug(dt, key)
-    assert_localized_equivalent(dt_shim, dt_pytz)
+    assert_dt_equivalent(dt_shim, dt_pytz)
 
 
 def _dublin_examples():
@@ -120,7 +120,7 @@ def test_localize_is_dst_none(dt, key):
 
     if dt_pytz:
         assume_no_dst_inconsistency_bug(dt, key, is_dst=False)
-        assert_localized_equivalent(dt_pytz, dt_shim)
+        assert_dt_equivalent(dt_pytz, dt_shim)
 
     if pytz_exc:
         assert repr(shim_exc) == repr(pytz_exc)
@@ -164,8 +164,8 @@ def test_normalize_same_zone(dt, delta, key):
         dt_shim_after = shim_zone.normalize(dt_shim_after_nn)
 
     assert dt_shim_after_nn is dt_shim_after
-    assume_no_dst_inconsistency_bug(dt, key)
-    assert_localized_equivalent(dt_pytz_after, dt_shim_after)
+    assume_no_dst_inconsistency_bug(dt + delta, key)
+    assert_dt_equivalent(dt_pytz_after, dt_shim_after, round_dates=True)
 
 
 # Helper functions
@@ -200,12 +200,14 @@ def assert_rounded_equal(actual, expected, **kwargs):
     assert actual_rounded == expected_rounded
 
 
-def assert_localized_equivalent(actual, expected):
+def assert_dt_equivalent(actual, expected, round_dates=False):
     actual_utc_offset = actual.utcoffset()
     actual_dst = actual.dst()
+    actual_naive = actual.replace(tzinfo=None)
 
     expected_utc_offset = expected.utcoffset()
     expected_dst = expected.dst()
+    expected_naive = expected.replace(tzinfo=None)
 
     assert_rounded_equal(actual_utc_offset, expected_utc_offset)
     # There are too many inconsistencies and bugs in the calculation of dst()
@@ -217,7 +219,12 @@ def assert_localized_equivalent(actual, expected):
     assert bool(actual_dst) == bool(expected_dst)
 
     assert actual.tzname() == expected.tzname()
-    assert actual.replace(tzinfo=None) == expected.replace(tzinfo=None)
+    if round_dates:
+        assert round_normalized(actual_naive) == round_normalized(
+            expected_naive
+        )
+    else:
+        assert actual_naive == expected_naive
 
 
 def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
