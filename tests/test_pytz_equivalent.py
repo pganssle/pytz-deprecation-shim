@@ -283,7 +283,7 @@ def assert_dt_equivalent(actual, expected, round_dates=False):
     assert actual_naive == expected_naive
 
 
-def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
+def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):  # prama: nocover
     # pytz and zoneinfo have bugs around the correct value for dst(), see, e.g.
     # Until those are fixed, we'll try to avoid these "sore spots" with a
     # combination of one-offs and rough heuristics.
