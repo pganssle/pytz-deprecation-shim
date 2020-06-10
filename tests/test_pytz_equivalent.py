@@ -203,6 +203,14 @@ def test_zone_attribute(key):
     assert pytz_zone_value == shim_zone_value
 
 
+@hypothesis.given(key=valid_zone_strategy)
+def test_str(key):
+    pytz_zone = pytz.timezone(key)
+    shim_zone = pds.timezone(key)
+
+    assert str(pytz_zone) == str(shim_zone)
+
+
 # Helper functions
 @lru_cache
 def round_timedelta(td):
