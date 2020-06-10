@@ -191,6 +191,18 @@ def test_normalize_same_zone(dt, delta, key):
     assert_dt_equivalent(dt_pytz_after, dt_shim_after, round_dates=True)
 
 
+@hypothesis.given(key=valid_zone_strategy)
+def test_zone_attribute(key):
+    pytz_zone = pytz.timezone(key)
+    shim_zone = pds.timezone(key)
+
+    pytz_zone_value = pytz_zone.zone
+    with pytest.warns(PytzUsageWarning):
+        shim_zone_value = shim_zone.zone
+
+    assert pytz_zone_value == shim_zone_value
+
+
 # Helper functions
 @lru_cache
 def round_timedelta(td):
