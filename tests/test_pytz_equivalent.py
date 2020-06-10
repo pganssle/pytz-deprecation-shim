@@ -276,7 +276,7 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
     hypothesis.assume(
         not (
             key in _ARGENTINA_ZONES
-            and datetime(1999, 10, 3) <= dt <= datetime(2000, 3, 3)
+            and datetime(1999, 10, 3) <= dt <= datetime(2000, 3, 4)
         )
     )
 
