@@ -6,7 +6,11 @@ import pytz
 
 import pytz_deprecation_shim as pds
 
-from ._common import invalid_zone_strategy, valid_zone_strategy
+from ._common import (
+    invalid_offset_minute_strategy,
+    invalid_zone_strategy,
+    valid_zone_strategy,
+)
 
 
 @hypothesis.given(key=invalid_zone_strategy)
@@ -34,3 +38,9 @@ def test_normalize_naive_datetime(key):
 
     with pytest.warns(pds.PytzUsageWarning), pytest.raises(ValueError):
         zone.normalize(dt)
+
+
+@hypothesis.given(offset=invalid_offset_minute_strategy)
+def test_invalid_fixed_offsets(offset):
+    with pytest.raises(ValueError):
+        pds.fixed_offset_timezone(offset)

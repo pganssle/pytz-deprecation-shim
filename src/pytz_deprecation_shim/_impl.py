@@ -22,6 +22,9 @@ def timezone(key, _cache={}):
 
 
 def fixed_offset_timezone(offset, _cache={}):
+    if not (-1440 < offset < 1440):
+        raise ValueError("absolute offset is too large", offset)
+
     instance = _cache.get(offset, None)
     if instance is None:
         if offset == 0:

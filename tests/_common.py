@@ -40,6 +40,12 @@ dt_strategy = hst.datetimes(min_value=MIN_DATETIME, max_value=MAX_DATETIME)
 offset_minute_strategy = hst.integers(
     min_value=-MAX_OFFSET_MINUTES, max_value=MAX_OFFSET_MINUTES
 )
+invalid_offset_minute_strategy = hst.one_of(
+    [
+        hst.integers(max_value=-(MAX_OFFSET_MINUTES + 1)),
+        hst.integers(min_value=(MAX_OFFSET_MINUTES + 1)),
+    ]
+)
 
 
 # Helper functions
