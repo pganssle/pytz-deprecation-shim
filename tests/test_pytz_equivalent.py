@@ -198,6 +198,10 @@ def test_normalize_same_zone(dt, delta, key):
 
 
 @hypothesis.given(dt=dt_strategy, offset=offset_minute_strategy)
+@hypothesis.example(dt=datetime(2020, 1, 1), offset=0)
+@hypothesis.example(dt=datetime(2020, 2, 29), offset=0)
+@hypothesis.example(dt=datetime(2020, 2, 29), offset=-1439)
+@hypothesis.example(dt=datetime(2020, 2, 29), offset=1439)
 def test_localize_fixed_offset(dt, offset):
     pytz_zone = pytz.FixedOffset(offset)
     shim_zone = pds.fixed_offset_timezone(offset)
