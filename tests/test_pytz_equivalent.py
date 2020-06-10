@@ -59,14 +59,37 @@ _ARGENTINA_ZONES |= {
     "America/Argentina/%s" % city for city in _ARGENTINA_CITIES
 }
 
+
 UTC = pds._compat.UTC
+
+
+def _conditional_examples(cond, examples):
+    if not cond:
+
+        def _(f):
+            return f
+
+    else:
+
+        def _(f):
+            f_out = f
+            for example in examples:
+                f_out = example(f_out)
+            return f_out
+
+    return _
 
 
 @hypothesis.given(
     dt=dt_strategy, key=valid_zone_strategy, is_dst=hst.booleans()
 )
-@hypothesis.example(
-    dt=datetime(2009, 3, 29, 2), key="Europe/Amsterdam", is_dst=True
+@_conditional_examples(
+    not PY2,
+    [
+        hypothesis.example(
+            dt=datetime(2009, 3, 29, 2), key="Europe/Amsterdam", is_dst=True
+        )
+    ],
 )
 def test_localize_explicit_is_dst(dt, key, is_dst):
     pytz_zone = pytz.timezone(key)
@@ -80,38 +103,22 @@ def test_localize_explicit_is_dst(dt, key, is_dst):
     assert_dt_equivalent(dt_shim, dt_pytz)
 
 
-def _dublin_examples():
-    if PY2:
-
-        def _(f):
-            return f
-
-    else:
-
-        def _(f):
-            examples = [
-                hypothesis.example(
-                    dt=datetime(2018, 3, 25, 1, 30), key="Europe/Dublin"
-                ),
-                hypothesis.example(
-                    dt=datetime(2018, 10, 28, 1, 30), key="Europe/Dublin"
-                ),
-            ]
-
-            f_out = f
-            for example in examples:
-                f_out = example(f_out)
-            return f_out
-
-    return _
-
-
 @hypothesis.given(dt=dt_strategy, key=valid_zone_strategy)
 @hypothesis.example(dt=datetime(2018, 3, 25, 1, 30), key="Europe/London")
 @hypothesis.example(dt=datetime(2018, 10, 28, 1, 30), key="Europe/London")
 @hypothesis.example(dt=datetime(2004, 4, 4, 2, 30), key="America/New_York")
 @hypothesis.example(dt=datetime(2004, 10, 31, 1, 30), key="America/New_York")
-@_dublin_examples()
+@_conditional_examples(
+    not PY2,
+    examples=[
+        hypothesis.example(
+            dt=datetime(2018, 3, 25, 1, 30), key="Europe/Dublin"
+        ),
+        hypothesis.example(
+            dt=datetime(2018, 10, 28, 1, 30), key="Europe/Dublin"
+        ),
+    ],
+)
 def test_localize_is_dst_none(dt, key):
     pytz_zone = pytz.timezone(key)
     shim_zone = pds.timezone(key)
