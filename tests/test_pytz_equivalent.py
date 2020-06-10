@@ -297,6 +297,13 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):
             )
         )
 
+        # dateutil isn't currently up to PEP 495's spec during ambiguous times,
+        # which means occasionally it's an ambiguous time and neither side is
+        # DST.
+        from dateutil import tz
+
+        hypothesis.assume(tz.datetime_exists(dt, uz))
+
     # bpo-40930: https://bugs.python.org/issue40930
     hypothesis.assume(
         not (
