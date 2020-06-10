@@ -46,6 +46,8 @@ _ARGENTINA_ZONES |= {
     "America/Argentina/%s" % city for city in _ARGENTINA_CITIES
 }
 
+UTC = pds._compat.UTC
+
 
 @hypothesis.given(
     dt=dt_strategy, key=valid_zone_strategy, is_dst=hst.booleans()
@@ -121,6 +123,48 @@ def test_localize_is_dst_none(dt, key):
         assert repr(shim_exc) == repr(pytz_exc)
         assert str(shim_exc) == str(pytz_exc)
         assert isinstance(shim_exc, type(pytz_exc))
+
+
+@hypothesis.given(
+    dt=dt_strategy,
+    delta=hst.timedeltas(
+        min_value=timedelta(days=-730), max_value=timedelta(days=730)
+    ),
+    key=valid_zone_strategy,
+)
+def test_normalize_same_zone(dt, delta, key):
+    """Test normalization after arithmetic.
+
+    NOTE: There is actually a difference in semantics here, because with pytz
+    zones, adding a timedelta and normalizing gives you absolute time
+    arithmetic, not wall-time arithmetic. To emulate this, we do the addition
+    of the shimmed zone in UTC.
+    """
+    pytz_zone = pytz.timezone(key)
+    shim_zone = pds.timezone(key)
+
+    dt_pytz = pytz_zone.localize(dt, is_dst=not pds._compat.get_fold(dt))
+    dt_shim = dt.replace(tzinfo=shim_zone)
+
+    hypothesis.assume(dt_pytz == dt_shim)
+
+    dt_pytz_after_nn = dt_pytz + delta
+    dt_shim_after_nn = (dt_shim.astimezone(UTC) + delta).astimezone(shim_zone)
+
+    hypothesis.assume(
+        NEGATIVE_EPOCHALYPSE
+        < dt_pytz_after_nn.replace(tzinfo=None)
+        < EPOCHALYPSE
+    )
+
+    dt_pytz_after = pytz_zone.normalize(dt_pytz_after_nn)
+
+    with pytest.warns(PytzUsageWarning):
+        dt_shim_after = shim_zone.normalize(dt_shim_after_nn)
+
+    assert dt_shim_after_nn is dt_shim_after
+    assume_no_dst_inconsistency_bug(dt, key)
+    assert_localized_equivalent(dt_pytz_after, dt_shim_after)
 
 
 # Helper functions
