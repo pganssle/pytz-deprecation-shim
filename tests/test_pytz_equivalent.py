@@ -13,23 +13,13 @@ from ._common import (
     MAX_DATETIME,
     MIN_DATETIME,
     PY2,
+    ZERO,
+    assert_dt_equivalent,
     dt_strategy,
+    enfold,
+    round_timedelta,
     valid_zone_strategy,
 )
-
-enfold = pds._compat.enfold
-
-# Opportunistically bring in lru_cache, with a no-op if it's unavailable
-# available
-try:
-    from functools import lru_cache
-except ImportError:
-
-    def lru_cache(f):
-        return f
-
-
-ZERO = timedelta(0)
 
 _ARGENTINA_CITIES = [
     "Buenos_Aires",
@@ -224,63 +214,6 @@ def test_str(key):
     shim_zone = pds.timezone(key)
 
     assert str(pytz_zone) == str(shim_zone)
-
-
-# Helper functions
-@lru_cache
-def round_timedelta(td):
-    """Truncates a timedelta to the nearest minute."""
-    if td == ZERO:
-        return td
-
-    tds = td.total_seconds()
-    rounded = int((tds + 30) // 60) * 60
-    return timedelta(seconds=rounded)
-
-
-def round_normalized(dt):
-    offset = dt.utcoffset()
-
-    rounded_offset = round_timedelta(offset)
-    if offset != rounded_offset:
-        new_dt = dt + (rounded_offset - offset)
-    else:
-        new_dt = dt
-    return enfold(new_dt, fold=pds._compat.get_fold(dt))
-
-
-def assert_rounded_equal(actual, expected, **kwargs):
-    actual_rounded = round_timedelta(actual, **kwargs)
-    expected_rounded = round_timedelta(expected, **kwargs)
-
-    assert actual_rounded == expected_rounded
-
-
-def assert_dt_equivalent(actual, expected, round_dates=False):
-    actual_utc_offset = actual.utcoffset()
-    actual_dst = actual.dst()
-
-    expected_utc_offset = expected.utcoffset()
-    expected_dst = expected.dst()
-
-    assert_rounded_equal(actual_utc_offset, expected_utc_offset)
-    # There are too many inconsistencies and bugs in the calculation of dst()
-    # in all three time zone libraries, so for the purposes of the shim, we
-    # will be satisfied as long as the truthiness of the dst() calls is the
-    # same between the two.
-    # TODO: Uncomment this line when we've ironed out the bugs:
-    # assert_rounded_equal(actual_dst, expected_dst)
-    assert bool(actual_dst) == bool(expected_dst)
-
-    assert actual.tzname() == expected.tzname()
-    if round_dates:
-        actual_naive = round_normalized(actual).replace(tzinfo=None)
-        expected_naive = round_normalized(expected).replace(tzinfo=None)
-    else:
-        actual_naive = actual.replace(tzinfo=None)
-        expected_naive = expected.replace(tzinfo=None)
-
-    assert actual_naive == expected_naive
 
 
 def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):  # prama: nocover

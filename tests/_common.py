@@ -5,7 +5,21 @@ from datetime import datetime, timedelta
 import pytz
 from hypothesis import strategies as hst
 
+import pytz_deprecation_shim as pds
+
+# Opportunistically bring in lru_cache, with a no-op if it's unavailable
+# available
+try:
+    from functools import lru_cache
+except ImportError:
+
+    def lru_cache(f):
+        return f
+
+
 PY2 = sys.version_info[0] == 2
+ZERO = timedelta(0)
+
 VALID_ZONES = sorted(pytz.all_timezones)
 VALID_ZONE_SET = set(VALID_ZONES)
 
@@ -21,3 +35,63 @@ MAX_DATETIME = EPOCHALYPSE - timedelta(days=365)
 valid_zone_strategy = hst.sampled_from(VALID_ZONES)
 invalid_zone_strategy = hst.text().filter(lambda t: t not in VALID_ZONE_SET)
 dt_strategy = hst.datetimes(min_value=MIN_DATETIME, max_value=MAX_DATETIME)
+
+
+# Helper functions
+enfold = pds._compat.enfold
+
+
+@lru_cache
+def round_timedelta(td):
+    """Truncates a timedelta to the nearest minute."""
+    if td == ZERO:
+        return td
+
+    tds = td.total_seconds()
+    rounded = int((tds + 30) // 60) * 60
+    return timedelta(seconds=rounded)
+
+
+def round_normalized(dt):
+    offset = dt.utcoffset()
+
+    rounded_offset = round_timedelta(offset)
+    if offset != rounded_offset:
+        new_dt = dt + (rounded_offset - offset)
+    else:
+        new_dt = dt
+    return enfold(new_dt, fold=pds._compat.get_fold(dt))
+
+
+def assert_rounded_equal(actual, expected, **kwargs):
+    actual_rounded = round_timedelta(actual, **kwargs)
+    expected_rounded = round_timedelta(expected, **kwargs)
+
+    assert actual_rounded == expected_rounded
+
+
+def assert_dt_equivalent(actual, expected, round_dates=False):
+    actual_utc_offset = actual.utcoffset()
+    actual_dst = actual.dst()
+
+    expected_utc_offset = expected.utcoffset()
+    expected_dst = expected.dst()
+
+    assert_rounded_equal(actual_utc_offset, expected_utc_offset)
+    # There are too many inconsistencies and bugs in the calculation of dst()
+    # in all three time zone libraries, so for the purposes of the shim, we
+    # will be satisfied as long as the truthiness of the dst() calls is the
+    # same between the two.
+    # TODO: Uncomment this line when we've ironed out the bugs:
+    # assert_rounded_equal(actual_dst, expected_dst)
+    assert bool(actual_dst) == bool(expected_dst)
+
+    assert actual.tzname() == expected.tzname()
+    if round_dates:
+        actual_naive = round_normalized(actual).replace(tzinfo=None)
+        expected_naive = round_normalized(expected).replace(tzinfo=None)
+    else:
+        actual_naive = actual.replace(tzinfo=None)
+        expected_naive = expected.replace(tzinfo=None)
+
+    assert actual_naive == expected_naive
