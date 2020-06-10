@@ -2,6 +2,7 @@ __all__ = [
     "AmbiguousTimeError",
     "NonExistentTimeError",
     "InvalidTimeError",
+    "UnknownTimeZoneError",
     "PytzUsageWarning",
     "FixedOffset",
     "UTC",
@@ -14,6 +15,7 @@ from ._exceptions import (
     InvalidTimeError,
     NonExistentTimeError,
     PytzUsageWarning,
+    UnknownTimeZoneError,
 )
 from ._impl import UTC, fixed_offset_timezone, timezone
 

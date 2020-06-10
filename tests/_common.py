@@ -7,6 +7,7 @@ from hypothesis import strategies as hst
 
 PY2 = sys.version_info[0] == 2
 VALID_ZONES = sorted(pytz.all_timezones)
+VALID_ZONE_SET = set(VALID_ZONES)
 
 # There will be known inconsistencies between pytz and the other libraries
 # right around the EPOCHALYPSE, because V1 files use 32-bit integers, and
@@ -18,4 +19,5 @@ MIN_DATETIME = NEGATIVE_EPOCHALYPSE + timedelta(days=365)
 MAX_DATETIME = EPOCHALYPSE - timedelta(days=365)
 
 valid_zone_strategy = hst.sampled_from(VALID_ZONES)
+invalid_zone_strategy = hst.text().filter(lambda t: t not in VALID_ZONE_SET)
 dt_strategy = hst.datetimes(min_value=MIN_DATETIME, max_value=MAX_DATETIME)

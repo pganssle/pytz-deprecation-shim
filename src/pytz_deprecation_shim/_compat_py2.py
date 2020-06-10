@@ -6,12 +6,15 @@ UTC = tz.UTC
 
 
 def get_timezone(key):
+    if not key:
+        raise KeyError("Unknown time zone: %s" % key)
+
     try:
         rv = tz.gettz(key)
     except Exception:
         rv = None
 
-    if rv is None:
+    if rv is None or not isinstance(rv, (tz.tzutc, tz.tzfile)):
         raise KeyError("Unknown time zone: %s" % key)
 
     return rv

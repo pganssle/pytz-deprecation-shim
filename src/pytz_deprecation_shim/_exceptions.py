@@ -5,6 +5,10 @@ class PytzUsageWarning(RuntimeWarning):
     pass
 
 
+class UnknownTimeZoneError(KeyError):
+    pass
+
+
 class InvalidTimeError(Exception):
     pass
 
@@ -24,6 +28,7 @@ def _make_pytz_derived_errors(
     InvalidTimeError_=InvalidTimeError,
     AmbiguousTimeError_=AmbiguousTimeError,
     NonExistentTimeError_=NonExistentTimeError,
+    UnknownTimeZoneError_=UnknownTimeZoneError,
 ):
     if PYTZ_BASE_ERROR_MAPPING or not pytz_imported():
         return
@@ -41,11 +46,17 @@ def _make_pytz_derived_errors(
     ):
         pass
 
+    class UnknownTimeZoneError(
+        UnknownTimeZoneError_, pytz.UnknownTimeZoneError
+    ):
+        pass
+
     PYTZ_BASE_ERROR_MAPPING.update(
         {
             InvalidTimeError_: InvalidTimeError,
             AmbiguousTimeError_: AmbiguousTimeError,
             NonExistentTimeError_: NonExistentTimeError,
+            UnknownTimeZoneError_: UnknownTimeZoneError,
         }
     )
 

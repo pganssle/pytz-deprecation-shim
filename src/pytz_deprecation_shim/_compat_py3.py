@@ -9,7 +9,10 @@ UTC = datetime.timezone.utc
 
 
 def get_timezone(key):
-    return zoneinfo.ZoneInfo(key)
+    try:
+        return zoneinfo.ZoneInfo(key)
+    except ValueError as e:
+        raise KeyError(key) from e
 
 
 def get_timezone_path(fpath, key=None):

@@ -6,6 +6,7 @@ from ._exceptions import (
     AmbiguousTimeError,
     NonExistentTimeError,
     PytzUsageWarning,
+    UnknownTimeZoneError,
     get_exception,
 )
 
@@ -147,7 +148,11 @@ class _BasePytzShimTimezone(tzinfo):
 
 class _PytzShimTimezone(_BasePytzShimTimezone):
     def __init__(self, key):
-        zone = _compat.get_timezone(key)
+        try:
+            zone = _compat.get_timezone(key)
+        except KeyError:
+            raise get_exception(UnknownTimeZoneError, key)
+
         super(_PytzShimTimezone, self).__init__(zone=zone, key=key)
 
 
