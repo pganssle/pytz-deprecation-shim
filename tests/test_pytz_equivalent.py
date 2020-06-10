@@ -183,15 +183,14 @@ def test_normalize_same_zone(dt, delta, key):
 
 
 # Helper functions
-def round_timedelta(td, nearest=timedelta(minutes=1)):
-    """Truncates a timedelta to the nearest even multiple of `nearest`."""
+def round_timedelta(td):
+    """Truncates a timedelta to the nearest minute."""
     if td == ZERO:
         return td
 
     tds = td.total_seconds()
-    sign = tds / abs(tds)
-    nearest *= int(sign)
-    return nearest * int(round(tds / nearest.total_seconds()))
+    rounded = int((tds + 30) // 60) * 60
+    return timedelta(seconds=rounded)
 
 
 def round_normalized(dt):
