@@ -24,6 +24,7 @@ except ImportError:
 
 PY2 = sys.version_info[0] == 2
 ZERO = timedelta(0)
+UTC = pds._compat.UTC
 
 VALID_ZONES = sorted(pytz.all_timezones)
 VALID_ZONE_SET = set(VALID_ZONES)
@@ -52,9 +53,9 @@ invalid_offset_minute_strategy = hst.one_of(
     ]
 )
 
-
 # Helper functions
 enfold = pds._compat.enfold
+get_fold = pds._compat.get_fold
 
 
 @lru_cache(128)

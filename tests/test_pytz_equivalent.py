@@ -13,10 +13,12 @@ from ._common import (
     MAX_DATETIME,
     MIN_DATETIME,
     PY2,
+    UTC,
     ZERO,
     assert_dt_equivalent,
     dt_strategy,
     enfold,
+    get_fold,
     offset_minute_strategy,
     round_timedelta,
     valid_zone_strategy,
@@ -43,9 +45,6 @@ _ARGENTINA_ZONES = {"America/%s" % city for city in _ARGENTINA_CITIES}
 _ARGENTINA_ZONES |= {
     "America/Argentina/%s" % city for city in _ARGENTINA_CITIES
 }
-
-
-UTC = pds._compat.UTC
 
 
 def _conditional_examples(cond, examples):
@@ -142,9 +141,7 @@ def test_localize_is_dst_none(dt, key):
         utc_off = uz.utcoffset(dt)
         hypothesis.assume(utc_off == round_timedelta(utc_off))
 
-        utc_off_folded = uz.utcoffset(
-            enfold(dt, fold=not pds._compat.get_fold(dt))
-        )
+        utc_off_folded = uz.utcoffset(enfold(dt, fold=not get_fold(dt)))
         hypothesis.assume(utc_off_folded == round_timedelta(utc_off_folded))
 
     if dt_pytz:
@@ -175,7 +172,7 @@ def test_normalize_same_zone(dt, delta, key):
     pytz_zone = pytz.timezone(key)
     shim_zone = pds.timezone(key)
 
-    dt_pytz = pytz_zone.localize(dt, is_dst=not pds._compat.get_fold(dt))
+    dt_pytz = pytz_zone.localize(dt, is_dst=not get_fold(dt))
     dt_shim = dt.replace(tzinfo=shim_zone)
 
     hypothesis.assume(dt_pytz == dt_shim)
