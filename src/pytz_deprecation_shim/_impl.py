@@ -16,7 +16,10 @@ IS_DST_SENTINEL = object()
 def timezone(key, _cache={}):
     instance = _cache.get(key, None)
     if instance is None:
-        instance = _cache.setdefault(key, _PytzShimTimezone(key))
+        if len(key) == 3 and key.lower() == "utc":
+            instance = _cache.setdefault(key, UTC)
+        else:
+            instance = _cache.setdefault(key, _PytzShimTimezone(key))
 
     return instance
 

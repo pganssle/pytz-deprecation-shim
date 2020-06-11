@@ -239,7 +239,11 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):  # prama: nocover
     # Until those are fixed, we'll try to avoid these "sore spots" with a
     # combination of one-offs and rough heuristics.
 
-    uz = pds._compat.get_timezone(key)
+    if len(key) == 3 and key.lower() == "utc":
+        uz = pds._compat.UTC
+    else:
+        uz = pds._compat.get_timezone(key)
+
     ###########
     # One-offs
     if PY2:
