@@ -22,6 +22,11 @@ def test_fixed_offset_utc():
     assert pds.fixed_offset_timezone(0) is pds.UTC
 
 
+@pytest.mark.parametrize("key", ["utc", "UTC"])
+def test_timezone_utc_singleton(key):
+    assert pds.timezone(key) is pds.UTC
+
+
 @hypothesis.given(key=valid_zone_strategy)
 def test_timezone_repr(key):
     zone = pds.timezone(key)

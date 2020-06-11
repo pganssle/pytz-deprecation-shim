@@ -1,3 +1,6 @@
+# Note: This file could use Python 3-only syntax, but at the moment this breaks
+# the coverage job on Python 2. Until we make it so that coverage can ignore
+# this file only on Python 2, we'll have to stick to 2/3-compatible syntax.
 try:
     import zoneinfo
 except ImportError:
@@ -11,8 +14,9 @@ UTC = datetime.timezone.utc
 def get_timezone(key):
     try:
         return zoneinfo.ZoneInfo(key)
-    except ValueError as e:
-        raise KeyError(key) from e
+    except (ValueError, OSError):
+        # TODO: Use `from e` when this file can use Python 3 syntax
+        raise KeyError(key)
 
 
 def get_timezone_path(fpath, key=None):
@@ -22,7 +26,8 @@ def get_timezone_path(fpath, key=None):
     except IOError:
         pass
 
-    raise zoneinfo.ZoneInfoNotFoundError(f"Unknown time zone file: {fpath}")
+    # TODO: Use an f-string when we can use Python 3-only syntax
+    raise zoneinfo.ZoneInfoNotFoundError("Unknown time zone file: %s" % fpath)
 
 
 def get_fixed_offset_zone(offset):

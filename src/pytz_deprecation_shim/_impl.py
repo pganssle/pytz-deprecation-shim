@@ -16,7 +16,10 @@ IS_DST_SENTINEL = object()
 def timezone(key, _cache={}):
     instance = _cache.get(key, None)
     if instance is None:
-        instance = _cache.setdefault(key, _PytzShimTimezone(key))
+        if len(key) == 3 and key.lower() == "utc":
+            instance = _cache.setdefault(key, UTC)
+        else:
+            instance = _cache.setdefault(key, _PytzShimTimezone(key))
 
     return instance
 
@@ -36,6 +39,12 @@ def fixed_offset_timezone(offset, _cache={}):
 
 
 class _BasePytzShimTimezone(tzinfo):
+    # Add instance variables for _zone and _key because this will make error
+    # reporting with partially-initialized _BasePytzShimTimezone objects
+    # work better.
+    _zone = None
+    _key = None
+
     def __init__(self, zone, key):
         self._key = key
         self._zone = zone

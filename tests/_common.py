@@ -13,8 +13,13 @@ try:
     from functools import lru_cache
 except ImportError:
 
-    def lru_cache(f):
-        return f
+    def lru_cache(maxsize):
+        del maxsize
+
+        def _(f):
+            return f
+
+        return _
 
 
 PY2 = sys.version_info[0] == 2
@@ -52,7 +57,7 @@ invalid_offset_minute_strategy = hst.one_of(
 enfold = pds._compat.enfold
 
 
-@lru_cache
+@lru_cache(128)
 def round_timedelta(td):
     """Truncates a timedelta to the nearest minute."""
     if td == ZERO:

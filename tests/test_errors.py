@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import hypothesis
 import pytest
@@ -13,6 +13,10 @@ from ._common import (
 )
 
 
+# On Python 2.7 when running 5 test suites in parallel, this is reliably flaky
+# without increasing the deadline. When running 1 or 2 in parallel it's only
+# intermittently flaky.
+@hypothesis.settings(deadline=timedelta(seconds=30))
 @hypothesis.given(key=invalid_zone_strategy)
 @hypothesis.example(key="")
 def test_invalid_zones(key):
