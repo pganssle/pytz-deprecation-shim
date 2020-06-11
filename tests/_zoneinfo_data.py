@@ -96,6 +96,40 @@ def get_unambiguous_cases():
     return tuple(cases)
 
 
+@lru_cache(None)
+def _get_folds_and_gaps():
+    fold_cases = []
+    gap_cases = []
+
+    for key in ZoneDumpData.transition_keys():
+        for transition in ZoneDumpData.load_transition_examples(key):
+            if not MIN_DATETIME < transition.transition < MAX_DATETIME:
+                continue
+
+            if transition.fold:
+                cases = fold_cases
+            elif transition.gap:
+                cases = gap_cases
+            else:  # pragma: nocover
+                continue
+
+            cases.append([key, transition])
+
+    return tuple(map(tuple, (fold_cases, gap_cases)))
+
+
+@lru_cache(None)
+def get_fold_cases():
+    """Returns a list of test cases that involve an ambiguous time."""
+    return _get_folds_and_gaps()[0]
+
+
+@lru_cache(None)
+def get_gap_cases():
+    """Returns a list of test cases that involve an imaginary time."""
+    return _get_folds_and_gaps()[1]
+
+
 class ZoneDumpData(object):
     @classmethod
     def transition_keys(cls):
