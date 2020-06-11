@@ -19,15 +19,8 @@ def get_timezone(key):
         raise KeyError(key)
 
 
-def get_timezone_path(fpath, key=None):
-    try:
-        with open(fpath, "rb") as f:
-            return zoneinfo.ZoneInfo.from_file(f, key=key)
-    except IOError:
-        pass
-
-    # TODO: Use an f-string when we can use Python 3-only syntax
-    raise zoneinfo.ZoneInfoNotFoundError("Unknown time zone file: %s" % fpath)
+def get_timezone_file(f, key=None):
+    return zoneinfo.ZoneInfo.from_file(f, key=key)
 
 
 def get_fixed_offset_zone(offset):

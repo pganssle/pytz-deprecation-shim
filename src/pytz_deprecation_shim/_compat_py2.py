@@ -20,8 +20,8 @@ def get_timezone(key):
     return rv
 
 
-def get_timezone_path(fpath, key=None):
-    return get_timezone(fpath)
+def get_timezone_file(f, key=None):
+    return tz.tzfile(f)
 
 
 def get_fixed_offset_zone(offset):

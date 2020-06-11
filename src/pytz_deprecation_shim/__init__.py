@@ -6,6 +6,7 @@ __all__ = [
     "PytzUsageWarning",
     "FixedOffset",
     "UTC",
+    "build_tzinfo",
     "timezone",
     "fixed_offset_timezone",
 ]
@@ -17,6 +18,6 @@ from ._exceptions import (
     PytzUsageWarning,
     UnknownTimeZoneError,
 )
-from ._impl import UTC, fixed_offset_timezone, timezone
+from ._impl import UTC, build_tzinfo, fixed_offset_timezone, timezone
 
 FixedOffset = fixed_offset_timezone  # For compatibility

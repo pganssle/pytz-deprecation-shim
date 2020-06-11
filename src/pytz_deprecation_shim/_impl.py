@@ -38,6 +38,13 @@ def fixed_offset_timezone(offset, _cache={}):
     return instance
 
 
+def build_tzinfo(zone, fp):
+    """A shim for pytz.build_tzinfo."""
+    zone_file = _compat.get_timezone_file(fp)
+
+    return _BasePytzShimTimezone(zone_file, key=zone)
+
+
 class _BasePytzShimTimezone(tzinfo):
     # Add instance variables for _zone and _key because this will make error
     # reporting with partially-initialized _BasePytzShimTimezone objects

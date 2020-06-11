@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import hypothesis
 import hypothesis.strategies as hst
@@ -7,14 +7,21 @@ import pytz
 
 import pytz_deprecation_shim as pds
 
+from . import _zoneinfo_data
 from ._common import (
     MAX_DATETIME,
     MIN_DATETIME,
+    PY2,
     assert_dt_equivalent,
+    assert_dt_offset,
     dt_strategy,
+    enfold,
+    get_fold,
     round_normalized,
     valid_zone_strategy,
 )
+
+ONE_SECOND = timedelta(seconds=1)
 
 
 def test_fixed_offset_utc():
@@ -83,3 +90,127 @@ def test_normalize_pytz_zone(dt, delta, key):
 
     hypothesis.assume(MIN_DATETIME <= rounded_shim_naive <= MAX_DATETIME)
     assert rounded_shim_naive == rounded_pytz_naive
+
+
+@pytest.mark.parametrize(
+    "key, dt, offset", _zoneinfo_data.get_unambiguous_cases()
+)
+def test_localize_unambiguous_build_tzinfo(key, dt, offset):
+    zone = pds.build_tzinfo(key, _zoneinfo_data.get_zone_file_obj(key))
+
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_localized = zone.localize(dt)
+
+    assert_dt_offset(dt_localized, offset)
+
+
+def _skip_transition(key, zt):
+    if not PY2:
+        return False
+
+    if key == "Europe/Dublin" and (
+        zt.transition > datetime(1968, 1, 1)
+        or zt.transition < datetime(1917, 1, 1)
+    ):
+        return True
+
+    if key == "Africa/Casablanca" and zt.transition > datetime(2019, 1, 1):
+        return True
+
+    if key == "America/Santiago" and zt.transition < datetime(1912, 1, 1):
+        return True
+
+    return False
+
+
+def _localize_fold_cases():
+    cases = []
+
+    def _add_case(key, dt, fold, offset, skip=False):
+        case = (key, dt, fold, offset)
+
+        if skip:
+            case = pytest.param(*case, marks=pytest.mark.skip)
+
+        cases.append(case)
+
+    for key, zt in _zoneinfo_data.get_fold_cases():
+        dt = zt.anomaly_start
+        skip = _skip_transition(key, zt)
+        _add_case(key, dt, 0, zt.offset_before, skip=skip)
+        _add_case(key, dt, 1, zt.offset_after, skip=skip)
+
+        dt = zt.anomaly_end - ONE_SECOND
+        _add_case(key, dt, 0, zt.offset_before, skip=skip)
+        _add_case(key, dt, 1, zt.offset_after, skip=skip)
+
+    return tuple(cases)
+
+
+@pytest.mark.parametrize("key, dt, fold, offset", _localize_fold_cases())
+def test_localize_folds(key, dt, fold, offset):
+    zone = pds.build_tzinfo(key, _zoneinfo_data.get_zone_file_obj(key))
+
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_localized = zone.localize(enfold(dt, fold=fold))
+
+    assert_dt_offset(dt_localized, offset)
+
+
+def _localize_gap_cases():
+    cases = []
+    for key, zt in _zoneinfo_data.get_gap_cases():
+        dt = zt.anomaly_start
+        cases.append((key, dt, 0, zt.offset_before))
+        cases.append((key, dt, 1, zt.offset_after))
+
+        dt = zt.anomaly_end - ONE_SECOND
+        cases.append((key, dt, 0, zt.offset_before))
+        cases.append((key, dt, 1, zt.offset_after))
+
+    return tuple(cases)
+
+
+@pytest.mark.parametrize("key, dt, fold, offset", _localize_gap_cases())
+@pytest.mark.skipif(
+    PY2, reason="dateutil.tz doesn't properly support fold during gaps"
+)
+def test_localize_gap(key, dt, fold, offset):
+    zone = pds.build_tzinfo(key, _zoneinfo_data.get_zone_file_obj(key))
+
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_localized = zone.localize(enfold(dt, fold=fold))
+
+    assert_dt_offset(dt_localized, offset)
+
+
+def _folds_from_utc_cases():
+    cases = []
+
+    def _add_case(key, dt_utc, expected_fold, skip=False):
+        case = (key, dt_utc, expected_fold)
+
+        if skip:
+            case = pytest.param(*case, marks=pytest.mark.skip)
+
+        cases.append(case)
+
+    for key, zt in _zoneinfo_data.get_fold_cases():
+        dt_utc = zt.transition_utc
+        dt_before_utc = dt_utc - ONE_SECOND
+        dt_after_utc = dt_utc + ONE_SECOND
+
+        skip = _skip_transition(key, zt)
+
+        _add_case(key, dt_before_utc, 0, skip=skip)
+        _add_case(key, dt_after_utc, 1, skip=skip)
+
+    return tuple(cases)
+
+
+@pytest.mark.parametrize("key, dt_utc, expected_fold", _folds_from_utc_cases())
+def test_folds_from_utc(key, dt_utc, expected_fold):
+    zone = pds.build_tzinfo(key, _zoneinfo_data.get_zone_file_obj(key))
+
+    dt = dt_utc.astimezone(zone)
+    assert get_fold(dt) == expected_fold
