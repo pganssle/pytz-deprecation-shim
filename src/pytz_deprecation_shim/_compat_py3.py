@@ -14,7 +14,7 @@ UTC = datetime.timezone.utc
 def get_timezone(key):
     try:
         return zoneinfo.ZoneInfo(key)
-    except ValueError:
+    except (ValueError, OSError):
         # TODO: Use `from e` when this file can use Python 3 syntax
         raise KeyError(key)
 
