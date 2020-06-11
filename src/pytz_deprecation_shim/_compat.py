@@ -7,7 +7,7 @@ else:
 
 UTC = _compat_impl.UTC
 get_timezone = _compat_impl.get_timezone
-get_timezone_path = _compat_impl.get_timezone_path
+get_timezone_file = _compat_impl.get_timezone_file
 get_fixed_offset_zone = _compat_impl.get_fixed_offset_zone
 is_ambiguous = _compat_impl.is_ambiguous
 is_imaginary = _compat_impl.is_imaginary

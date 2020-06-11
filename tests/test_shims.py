@@ -7,10 +7,12 @@ import pytz
 
 import pytz_deprecation_shim as pds
 
+from . import _zoneinfo_data
 from ._common import (
     MAX_DATETIME,
     MIN_DATETIME,
     assert_dt_equivalent,
+    assert_dt_offset,
     dt_strategy,
     round_normalized,
     valid_zone_strategy,
@@ -83,3 +85,15 @@ def test_normalize_pytz_zone(dt, delta, key):
 
     hypothesis.assume(MIN_DATETIME <= rounded_shim_naive <= MAX_DATETIME)
     assert rounded_shim_naive == rounded_pytz_naive
+
+
+@pytest.mark.parametrize(
+    "key, dt, offset", _zoneinfo_data.get_unambiguous_cases()
+)
+def test_localize_unambiguous_build_tzinfo(key, dt, offset):
+    zone = pds.build_tzinfo(key, _zoneinfo_data.get_zone_file_obj(key))
+
+    with pytest.warns(pds.PytzUsageWarning):
+        dt_localized = zone.localize(dt)
+
+    assert_dt_offset(dt_localized, offset)

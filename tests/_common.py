@@ -112,3 +112,9 @@ def assert_dt_equivalent(actual, expected, round_dates=False):
         expected_naive = expected.replace(tzinfo=None)
 
     assert actual_naive == expected_naive
+
+
+def assert_dt_offset(dt, offset):
+    assert dt.tzname() == offset.tzname
+    assert dt.utcoffset() == offset.utcoffset
+    assert dt.dst() == offset.dst
