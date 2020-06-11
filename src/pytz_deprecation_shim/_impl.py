@@ -39,6 +39,12 @@ def fixed_offset_timezone(offset, _cache={}):
 
 
 class _BasePytzShimTimezone(tzinfo):
+    # Add instance variables for _zone and _key because this will make error
+    # reporting with partially-initialized _BasePytzShimTimezone objects
+    # work better.
+    _zone = None
+    _key = None
+
     def __init__(self, zone, key):
         self._key = key
         self._zone = zone
