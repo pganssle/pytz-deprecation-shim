@@ -50,8 +50,14 @@ jobs:
           fi
         fi
 
+        # Disable coverage on pypy
+        if [[ ${{ matrix.python-version }} = pypy* ]]; then
+          export DEFAULT_TEST_POSARGS=''
+        fi
+
         python -m tox
     - name: Report coverage
+      if: ${{ ! startsWith(matrix.python-version, 'pypy') }}
       run: |
         tox -e coverage-report,codecov
 
