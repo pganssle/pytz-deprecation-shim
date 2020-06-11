@@ -40,6 +40,16 @@ jobs:
 
         echo "PYTZ_TZDATADIR: $PYTZ_TZDATADIR"
         echo "PYTHONTZPATH: $PYTHONTZPATH"
+
+        if [[ ! -z "$PYTZ_TZDATADIR" ]]; then
+          tzdata_zi="$PYTZ_TZDATADIR/tzdata.zi"
+          if [[ -f "$tzdata_zi" ]]; then
+            head -n 2 "$tzdata_zi"
+          else
+            echo "$tzdata_zi not found"
+          fi
+        fi
+
         python -m tox
     - name: Report coverage
       run: |
