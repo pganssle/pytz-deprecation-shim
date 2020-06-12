@@ -135,7 +135,9 @@ def test_localize_is_dst_none(dt, key):
         except pds.InvalidTimeError as e:
             shim_exc = e
 
-    if (dt_pytz is None) != (dt_shim is None):
+    # This section is triggered rarely. It currently occurs in Python 3 when
+    # key = "Africa/Abidjan" and dt is 1912-01-01.
+    if (dt_pytz is None) != (dt_shim is None):  # pragma: nocover
         uz = pds._compat.get_timezone(key)
 
         utc_off = uz.utcoffset(dt)
