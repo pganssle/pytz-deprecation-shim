@@ -26,6 +26,8 @@ ZONE_LIST = (
     "Europe/Dublin",
 )
 
+OFFSET_MINUTES_LIST = (0, -1439, 1439, 0, 60, -60, 11)
+
 
 def _timezones(tz_constructor):
     return tuple(map(tz_constructor, ZONE_LIST))
@@ -50,7 +52,7 @@ PYTZ_ZONES = (
 )
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def helper_lock():
     """Lock around anything using the helper module."""
     with HELPER_LOCK:
@@ -58,7 +60,7 @@ def helper_lock():
 
 
 @pytest.fixture
-def no_pytz(helper_lock):
+def no_pytz():
     """Fixture to remove pytz from sys.modules for the duration of the test."""
     with SYS_MODULES_LOCK:
         pds._common._PYTZ_IMPORTED = False
@@ -80,7 +82,7 @@ def no_pytz(helper_lock):
 
 
 @pytest.mark.parametrize("tz", NON_PYTZ_ZONES)
-def test_not_pytz_zones(tz, helper_lock):
+def test_not_pytz_zones(tz):
     """Tests is_pytz_zone for non-pytz zones."""
     assert not pds_helpers.is_pytz_zone(tz)
 
@@ -95,7 +97,7 @@ def test_not_pytz_no_pytz(tz, no_pytz):
 
 
 @pytest.mark.parametrize("tz", PYTZ_ZONES)
-def test_pytz_zone(tz, helper_lock):
+def test_pytz_zone(tz):
     assert pds_helpers.is_pytz_zone(tz)
 
 
@@ -116,3 +118,72 @@ def test_pytz_zones_before_after(key, no_pytz):
 
     pytz_zone = pytz.timezone(key)
     assert pds_helpers.is_pytz_zone(pytz_zone)
+
+
+@pytest.mark.parametrize("key", ZONE_LIST)
+def test_upgrade_shim_timezone(key):
+    shim_zone = pds.timezone(key)
+
+    actual = pds_helpers.upgrade_tzinfo(shim_zone)
+    expected = get_timezone(key)
+
+    assert actual is expected
+
+
+@pytest.mark.parametrize("key", ZONE_LIST)
+def test_upgrade_pytz_timezone(key):
+    pytz_zone = pytz.timezone(key)
+
+    actual = pds_helpers.upgrade_tzinfo(pytz_zone)
+    expected = get_timezone(key)
+
+    assert actual is expected
+
+
+@pytest.mark.parametrize("offset_minutes", OFFSET_MINUTES_LIST)
+def test_upgrade_shim_fixed_offset(offset_minutes):
+    shim_zone = pds.fixed_offset_timezone(offset_minutes)
+
+    actual = pds_helpers.upgrade_tzinfo(shim_zone)
+    expected = get_fixed_timezone(offset_minutes)
+
+    # get_fixed_timezone doesn't do any caching, so the fixed offsets aren't
+    # necessarily going to be singletons.
+    assert actual == expected
+
+
+@pytest.mark.parametrize("offset_minutes", OFFSET_MINUTES_LIST)
+def test_upgrade_pytz_fixed_offset(offset_minutes):
+    pytz_zone = pytz.FixedOffset(offset_minutes)
+
+    actual = pds_helpers.upgrade_tzinfo(pytz_zone)
+    expected = get_fixed_timezone(offset_minutes)
+
+    # get_fixed_timezone doesn't do any caching, so the fixed offsets aren't
+    # necessarily going to be singletons.
+    assert actual == expected
+
+
+@pytest.mark.parametrize("utc", (pds.UTC, pytz.UTC))
+def test_upgrade_utc(utc):
+    """Tests that upgrade_zone called on UTC objects returns _compat.UTC.
+
+    This is relevant because tz.gettz("UTC") or zoneinfo.ZoneInfo("UTC") may
+    each return a tzfile-based zone, not their respective UTC singletons.
+    """
+    actual = pds_helpers.upgrade_tzinfo(utc)
+
+    assert actual is UTC
+
+
+@pytest.mark.parametrize(
+    "tz",
+    [UTC]
+    + list(map(get_timezone, ZONE_LIST))
+    + list(map(get_fixed_timezone, OFFSET_MINUTES_LIST)),
+)
+def test_upgrade_tz_noop(tz):
+    """Tests that non-shim, non-pytz zones are unaffected by upgrade_tzinfo."""
+    actual = pds_helpers.upgrade_tzinfo(tz)
+
+    assert actual is tz

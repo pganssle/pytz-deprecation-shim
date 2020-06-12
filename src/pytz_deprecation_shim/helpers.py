@@ -2,8 +2,8 @@
 This module contains helper functions to ease the transition from ``pytz`` to
 another :pep:`495`-compatible library.
 """
-
-from . import _common
+from . import _common, _compat
+from ._impl import _BasePytzShimTimezone
 
 _PYTZ_BASE_CLASSES = None
 
@@ -28,6 +28,52 @@ def is_pytz_zone(tz):
         _populate_pytz_base_classes()
 
     return isinstance(tz, _PYTZ_BASE_CLASSES)
+
+
+def upgrade_tzinfo(tz):
+    """Convert a ``pytz`` or shim timezone into its modern equivalent.
+
+    The shim classes are thin wrappers around :mod:`zoneinfo` or
+    :mod:`dateutil.tz` implementations of the :class:`datetime.tzinfo` base
+    class. This function removes the shim and returns the underlying "upgraded"
+    time zone.
+
+    When passed a ``pytz`` zone (not a shim), this returns the non-``pytz``
+    equivalent. This may fail if ``pytz`` is using a data source incompatible
+    with the upgraded provider's data source, or if the ``pytz`` zone was built
+    from a file rather than an IANA key.
+
+    When passed an object that is not a shim or a ``pytz`` zone, this returns
+    the original object.
+
+    :param tz:
+        A :class:`datetime.tzinfo` object.
+
+    :raises KeyError:
+        If a ``pytz`` zone is passed to the function with no equivalent in the
+        :pep:`495`-compatible library's version of the Olson database.
+
+    :return:
+        A :pep:`495`-compatible equivalent of any ``pytz`` or shim
+        class, or the original object.
+    """
+    if isinstance(tz, _BasePytzShimTimezone):
+        return tz._zone
+
+    if is_pytz_zone(tz):
+        if tz.zone is None:
+            # This is a fixed offset zone
+            offset = tz.utcoffset(None)
+            offset_minutes = offset.total_seconds() / 60
+
+            return _compat.get_fixed_offset_zone(offset_minutes)
+
+        if tz.zone == "UTC":
+            return _compat.UTC
+
+        return _compat.get_timezone(tz.zone)
+
+    return tz
 
 
 def _populate_pytz_base_classes():
