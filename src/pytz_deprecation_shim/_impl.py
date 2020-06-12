@@ -97,7 +97,7 @@ class _BasePytzShimTimezone(tzinfo):
     def localize(self, dt, is_dst=IS_DST_SENTINEL):
         warnings.warn(
             "The localize method is no longer necessary, as this "
-            + "time zone supports the fold attribute(PEP 495). "
+            + "time zone supports the fold attribute (PEP 495). "
             + "For more details on migrating to a PEP 495-compliant "
             + "implementation, see %s" % PYTZ_MIGRATION_GUIDE_URL,
             PytzUsageWarning,
@@ -147,7 +147,7 @@ class _BasePytzShimTimezone(tzinfo):
     def normalize(self, dt):
         warnings.warn(
             "The normalize method is no longer necessary, as this "
-            + "time zone supports the fold attribute(PEP 495). "
+            + "time zone supports the fold attribute (PEP 495). "
             + "For more details on migrating to a PEP 495-compliant "
             + "implementation, see %s" % PYTZ_MIGRATION_GUIDE_URL,
             PytzUsageWarning,
@@ -179,4 +179,6 @@ class _FixedOffsetShim(_BasePytzShimTimezone):
 
 
 UTC = _BasePytzShimTimezone(_compat.UTC, "UTC")
-PYTZ_MIGRATION_GUIDE_URL = "<TBD>"
+PYTZ_MIGRATION_GUIDE_URL = (
+    "https://pytz-deprecation-shim.readthedocs.io/en/latest/migration.html"
+)

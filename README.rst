@@ -69,8 +69,9 @@ a warning (rather than an exception) when they use those features:
     >>> dt = LA.localize(datetime(2020, 10, 31, 12))
     .../pytz_deprecation_shim/_impl.py:81: PytzUsageWarning: The localize
     method is no longer necessary, as this time zone supports the fold
-    attribute(PEP 495). For more details on migrating to a PEP 495-compliant
-    implementation, see <TBD>
+    attribute (PEP 495). For more details on migrating to a PEP 495-compliant
+    implementation, see
+    https://pytz-deprecation-shim.readthedocs.io/en/latest/migration.html
     warnings.warn(
 
      >>> print(dt)
@@ -81,8 +82,9 @@ a warning (rather than an exception) when they use those features:
     >>> dt_add = LA.normalize(dt + timedelta(days=1))
     .../pytz_deprecation_shim/_impl.py:131: PytzUsageWarning: The normalize
     method is no longer necessary, as this time zone supports the fold
-    attribute(PEP 495). For more details on migrating to a PEP 495-compliant
-    implementation, see <TBD>
+    attribute (PEP 495). For more details on migrating to a PEP 495-compliant
+    implementation, see
+    https://pytz-deprecation-shim.readthedocs.io/en/latest/migration.html
     warnings.warn(
 
     >>> print(dt_add)
