@@ -11,6 +11,7 @@ __all__ = [
     "fixed_offset_timezone",
 ]
 
+from . import helpers
 from ._exceptions import (
     AmbiguousTimeError,
     InvalidTimeError,
