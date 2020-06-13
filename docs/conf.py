@@ -45,7 +45,11 @@ release = VERSION
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.extlinks",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -67,3 +71,18 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
+
+# For cross-links to other documentation
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.9", None),
+    "dateutil": ("https://dateutil.readthedocs.io/en/stable/", None),
+}
+
+_repo = "https://github.com/pganssle/pytz-deprecation-shim/"
+extlinks = {
+    "gh": (_repo + "issues/%s", "GH-"),
+    "gh-pr": (_repo + "pull/%s", "GH-"),
+    "pypi": ("https://pypi.org/project/%s", ""),
+    "bpo": ("https://bugs.python.org/issue%s", "bpo-"),
+    "cpython-pr": ("https://github.com/python/cpython/pull/%s", "CPython PR #"),
+}

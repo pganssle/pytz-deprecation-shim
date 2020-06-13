@@ -3,6 +3,8 @@
 .. toctree::
    :maxdepth: 2
 
+   helpers
+
 
 
 Indices and tables
