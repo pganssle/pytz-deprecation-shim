@@ -12,7 +12,7 @@ import os
 
 def read_setup_cfg_version():
     here = os.path.split(__file__)[0]
-    setup_cfg = os.path.join(here, "setup.cfg")
+    setup_cfg = os.path.join(here, "../setup.cfg")
 
     config = configparser.ConfigParser()
     config.read(setup_cfg)
