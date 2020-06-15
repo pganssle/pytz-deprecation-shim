@@ -6,6 +6,7 @@ __all__ = [
     "PytzUsageWarning",
     "FixedOffset",
     "UTC",
+    "utc",
     "build_tzinfo",
     "timezone",
     "fixed_offset_timezone",
@@ -28,4 +29,6 @@ from ._impl import (
     wrap_zone,
 )
 
-FixedOffset = fixed_offset_timezone  # For compatibility
+# Compatibility aliases
+utc = UTC
+FixedOffset = fixed_offset_timezone
