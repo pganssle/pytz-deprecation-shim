@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import warnings
 from datetime import tzinfo
 
@@ -143,21 +144,30 @@ class _BasePytzShimTimezone(tzinfo):
                 raise get_exception(AmbiguousTimeError, dt.replace(tzinfo=None))
 
         elif dt_ambiguous or dt_imaginary:
-            dst_side = dt_out.dst()
-
-            if not _compat.get_fold(dt_out):
-                dst_side = not dst_side
+            # Start by normalizing the folds; dt_out may have fold=0 or fold=1,
+            # but we need to know the DST offset on both sides anyway, so we
+            # will get one datetime representing each side of the fold, then
+            # decide which one we're going to return.
+            if _compat.get_fold(dt_out):
+                dt_enfolded = dt_out
+                dt_out = _compat.enfold(dt_out, fold=0)
             else:
-                # If dt_out.fold is set to 1, the fold value that
-                # corresponds to dst is the opposite of the dt_out.dst()
-                dst_side = bool(dst_side)
+                dt_enfolded = _compat.enfold(dt_out, fold=1)
 
-            if is_dst:
-                fold = dst_side
-            else:
-                fold = not dst_side
+            # Now we want to decide whether the fold=0 or fold=1 represents
+            # what pytz would return for `is_dst=True`
+            enfolded_dst = bool(dt_enfolded.dst())
+            if bool(dt_out.dst()) == enfolded_dst:
+                # If this is not a transition between standard time and
+                # daylight saving time, pytz will consider the larger offset
+                # the DST offset.
+                enfolded_dst = dt_enfolded.utcoffset() > dt_out.utcoffset()
 
-            dt_out = _compat.enfold(dt_out, fold=int(fold))
+            # The default we've established is that dt_out is fold=0; swap it
+            # for the fold=1 datetime if is_dst == True and the enfolded side
+            # is DST or if is_dst == False and the enfolded side is *not* DST.
+            if is_dst == enfolded_dst:
+                dt_out = dt_enfolded
 
         return dt_out
 

@@ -88,7 +88,27 @@ def _conditional_examples(cond, examples):
     [
         hypothesis.example(
             dt=datetime(2009, 3, 29, 2), key="Europe/Amsterdam", is_dst=True
-        )
+        ),
+        hypothesis.example(
+            dt=enfold(datetime(1933, 1, 1), fold=0),
+            key="Asia/Kuching",
+            is_dst=True,
+        ),
+        hypothesis.example(
+            dt=enfold(datetime(1933, 1, 1), fold=1),
+            key="Asia/Kuching",
+            is_dst=True,
+        ),
+        hypothesis.example(
+            dt=enfold(datetime(1933, 1, 1), fold=0),
+            key="Asia/Kuching",
+            is_dst=False,
+        ),
+        hypothesis.example(
+            dt=enfold(datetime(1933, 1, 1), fold=1),
+            key="Asia/Kuching",
+            is_dst=False,
+        ),
     ],
 )
 def test_localize_explicit_is_dst(dt, key, is_dst):
