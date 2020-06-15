@@ -82,6 +82,21 @@ class _BasePytzShimTimezone(tzinfo):
             repr(self._key),
         )
 
+    def unwrap_shim(self):
+        """Returns the underlying class that the shim is a wrapper for.
+
+        This is a shim-specific method equivalent to
+        :func:`pytz_deprecation_shim.helpers.upgrade_tzinfo`. It is provided as
+        a method to allow end-users to upgrade shim timezones without requiring
+        an explicit dependency on ``pytz_deprecation_shim``, e.g.:
+
+        .. code-block:: python
+
+            if getattr(tz, "unwrap_shim", None) is None:
+                tz = tz.unwrap_shim()
+        """
+        return self._zone
+
     @property
     def zone(self):
         warnings.warn(

@@ -17,6 +17,7 @@ from ._common import (
     dt_strategy,
     enfold,
     get_fold,
+    offset_minute_strategy,
     round_normalized,
     valid_zone_strategy,
 )
@@ -214,3 +215,17 @@ def test_folds_from_utc(key, dt_utc, expected_fold):
 
     dt = dt_utc.astimezone(zone)
     assert get_fold(dt) == expected_fold
+
+
+@hypothesis.given(
+    shim_zone=hst.one_of(
+        [
+            valid_zone_strategy.map(pds.timezone),
+            offset_minute_strategy.map(pds.fixed_offset_timezone),
+            hst.just(pds.UTC),
+        ]
+    )
+)
+def test_unwrap_shim(shim_zone):
+    """Tests that .unwrap(_shim) always does the same as upgrade_tzinfo()."""
+    assert shim_zone.unwrap_shim() is pds.helpers.upgrade_tzinfo(shim_zone)
