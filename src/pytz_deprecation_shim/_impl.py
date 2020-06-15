@@ -90,6 +90,7 @@ class _BasePytzShimTimezone(tzinfo):
             + "For more details on how to do so, see %s"
             % PYTZ_MIGRATION_GUIDE_URL,
             PytzUsageWarning,
+            stacklevel=2,
         )
 
         return self._key
@@ -101,6 +102,7 @@ class _BasePytzShimTimezone(tzinfo):
             + "For more details on migrating to a PEP 495-compliant "
             + "implementation, see %s" % PYTZ_MIGRATION_GUIDE_URL,
             PytzUsageWarning,
+            stacklevel=2,
         )
 
         if dt.tzinfo is not None:
@@ -151,6 +153,7 @@ class _BasePytzShimTimezone(tzinfo):
             + "For more details on migrating to a PEP 495-compliant "
             + "implementation, see %s" % PYTZ_MIGRATION_GUIDE_URL,
             PytzUsageWarning,
+            stacklevel=2,
         )
 
         if dt.tzinfo is None:
