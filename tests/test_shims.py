@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 
 import hypothesis
 import hypothesis.strategies as hst
@@ -23,6 +23,7 @@ from ._common import (
 )
 
 ONE_SECOND = timedelta(seconds=1)
+ARBITRARY_KEY_STRATEGY = hst.from_regex("[a-zA-Z][a-zA-Z_]+(/[a-zA-Z_]+)+")
 
 
 def test_fixed_offset_utc():
@@ -217,15 +218,73 @@ def test_folds_from_utc(key, dt_utc, expected_fold):
     assert get_fold(dt) == expected_fold
 
 
-@hypothesis.given(
-    shim_zone=hst.one_of(
-        [
-            valid_zone_strategy.map(pds.timezone),
-            offset_minute_strategy.map(pds.fixed_offset_timezone),
-            hst.just(pds.UTC),
-        ]
-    )
+SHIM_ZONE_STRATEGY = hst.one_of(
+    [
+        valid_zone_strategy.map(pds.timezone),
+        offset_minute_strategy.map(pds.fixed_offset_timezone),
+        hst.just(pds.UTC),
+    ]
 )
+
+
+@hypothesis.given(shim_zone=SHIM_ZONE_STRATEGY)
 def test_unwrap_shim(shim_zone):
     """Tests that .unwrap(_shim) always does the same as upgrade_tzinfo()."""
     assert shim_zone.unwrap_shim() is pds.helpers.upgrade_tzinfo(shim_zone)
+
+
+@pytest.mark.skipif(
+    PY2, reason="Currently dateutil does not have a .key attribute"
+)
+def test_wrap_zone_default_key():
+    key = "America/New_York"
+    zone = pds._compat.get_timezone(key)
+
+    wrapped_zone = pds.wrap_zone(zone)
+
+    assert str(wrapped_zone) == key
+
+
+def test_wrap_zone_no_key():
+    class TzInfo(tzinfo):
+        def __init__(self):
+            pass
+
+    zone = TzInfo()
+
+    with pytest.raises(TypeError):
+        pds.wrap_zone(zone)
+
+
+@hypothesis.given(shim_zone=SHIM_ZONE_STRATEGY)
+def test_wrap_zone_same_object(shim_zone):
+    """Tests unwrapping and rewrapping a shim zone.
+
+    This should return the original shim object.
+    """
+    unwrapped = shim_zone.unwrap_shim()
+
+    with pytest.warns(pds.PytzUsageWarning):
+        key = shim_zone.zone
+
+    rewrapped = pds.wrap_zone(unwrapped, key=key)
+
+    assert rewrapped is shim_zone
+
+
+@hypothesis.given(shim_zone=SHIM_ZONE_STRATEGY, key=ARBITRARY_KEY_STRATEGY)
+def test_wrap_zone_new_key(shim_zone, key):
+    """Test that wrap_zone can set arbitrary keys.
+
+    There are a bunch of layers of caching here, so we want to make sure that
+    if we wrap a zone that may already live in a cache with a new shim that has
+    a different key, the new wrapper will reflect that, and the existing shim
+    class won't be affected.
+    """
+    original_key = str(shim_zone)
+    unwrapped = shim_zone.unwrap_shim()
+
+    new_shim = pds.wrap_zone(unwrapped, key=key)
+
+    assert str(new_shim) == key
+    assert str(shim_zone) == original_key

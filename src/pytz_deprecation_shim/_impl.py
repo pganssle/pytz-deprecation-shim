@@ -12,6 +12,7 @@ from ._exceptions import (
 )
 
 IS_DST_SENTINEL = object()
+KEY_SENTINEL = object()
 
 
 def timezone(key, _cache={}):
@@ -20,7 +21,11 @@ def timezone(key, _cache={}):
         if len(key) == 3 and key.lower() == "utc":
             instance = _cache.setdefault(key, UTC)
         else:
-            instance = _cache.setdefault(key, _PytzShimTimezone(key))
+            try:
+                zone = _compat.get_timezone(key)
+            except KeyError:
+                raise get_exception(UnknownTimeZoneError, key)
+            instance = _cache.setdefault(key, wrap_zone(zone, key=key))
 
     return instance
 
@@ -34,7 +39,8 @@ def fixed_offset_timezone(offset, _cache={}):
         if offset == 0:
             instance = _cache.setdefault(offset, UTC)
         else:
-            instance = _cache.setdefault(offset, _FixedOffsetShim(offset))
+            zone = _compat.get_fixed_offset_zone(offset)
+            instance = _cache.setdefault(offset, wrap_zone(zone, key=None))
 
     return instance
 
@@ -43,10 +49,45 @@ def build_tzinfo(zone, fp):
     """A shim for pytz.build_tzinfo."""
     zone_file = _compat.get_timezone_file(fp)
 
-    return _BasePytzShimTimezone(zone_file, key=zone)
+    return wrap_zone(zone_file, key=zone)
 
 
-class _BasePytzShimTimezone(tzinfo):
+def wrap_zone(tz, key=KEY_SENTINEL, _cache={}):
+    """Wrap an existing time zone object in a shim class.
+
+    This is likely to be useful if you would like to work internally with
+    non-``pytz`` zones, but you expose an interface to callers relying on
+    ``pytz``'s interface. It may also be useful for passing non-``pytz`` zones
+    to libraries expecting to use ``pytz``'s interface.
+
+    :param tz:
+        A :pep:495-compatible time zone, such as those provided by
+        :mod:`dateutil.tz` or :mod:`zoneinfo`.
+
+    :param key:
+        The value for the IANA time zone key. This is optional for ``zoneinfo``
+        zones, but required for ``dateutil.tz`` zones.
+
+    :return:
+        A shim time zone.
+    """
+    if key is KEY_SENTINEL:
+        key = getattr(tz, "key", KEY_SENTINEL)
+
+    if key is KEY_SENTINEL:
+        raise TypeError(
+            "The `key` argument is required when wrapping zones that do not "
+            + "have a `key` attribute."
+        )
+
+    instance = _cache.get((id(tz), key), None)
+    if instance is None:
+        instance = _cache.setdefault((id(tz), key), _PytzShimTimezone(tz, key))
+
+    return instance
+
+
+class _PytzShimTimezone(tzinfo):
     # Add instance variables for _zone and _key because this will make error
     # reporting with partially-initialized _BasePytzShimTimezone objects
     # work better.
@@ -190,23 +231,7 @@ class _BasePytzShimTimezone(tzinfo):
         return dt.astimezone(self)
 
 
-class _PytzShimTimezone(_BasePytzShimTimezone):
-    def __init__(self, key):
-        try:
-            zone = _compat.get_timezone(key)
-        except KeyError:
-            raise get_exception(UnknownTimeZoneError, key)
-
-        super(_PytzShimTimezone, self).__init__(zone=zone, key=key)
-
-
-class _FixedOffsetShim(_BasePytzShimTimezone):
-    def __init__(self, offset):
-        zone = _compat.get_fixed_offset_zone(offset)
-        super(_FixedOffsetShim, self).__init__(zone=zone, key=None)
-
-
-UTC = _BasePytzShimTimezone(_compat.UTC, "UTC")
+UTC = wrap_zone(_compat.UTC, "UTC")
 PYTZ_MIGRATION_GUIDE_URL = (
     "https://pytz-deprecation-shim.readthedocs.io/en/latest/migration.html"
 )
