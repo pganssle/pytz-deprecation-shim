@@ -12,7 +12,7 @@ import os
 
 def read_setup_cfg_version():
     here = os.path.split(__file__)[0]
-    setup_cfg = os.path.join(here, "setup.cfg")
+    setup_cfg = os.path.join(here, "../setup.cfg")
 
     config = configparser.ConfigParser()
     config.read(setup_cfg)
@@ -70,7 +70,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ["_static"]
 
 # For cross-links to other documentation
 intersphinx_mapping = {
