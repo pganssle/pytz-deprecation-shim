@@ -230,6 +230,15 @@ class _PytzShimTimezone(tzinfo):
 
         return dt.astimezone(self)
 
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo=None):
+        return self
+
+    def __reduce__(self):
+        return wrap_zone, (self._zone, self._key)
+
 
 UTC = wrap_zone(_compat.UTC, "UTC")
 PYTZ_MIGRATION_GUIDE_URL = (
