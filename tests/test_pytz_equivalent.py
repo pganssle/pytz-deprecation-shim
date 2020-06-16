@@ -16,6 +16,7 @@ from ._common import (
     UTC,
     ZERO,
     assert_dt_equivalent,
+    conditional_examples,
     dt_strategy,
     enfold,
     get_fold,
@@ -47,23 +48,6 @@ _ARGENTINA_ZONES |= {
 }
 
 
-def _conditional_examples(cond, examples):
-    if not cond:
-
-        def _(f):
-            return f
-
-    else:
-
-        def _(f):
-            f_out = f
-            for example in examples:
-                f_out = example(f_out)
-            return f_out
-
-    return _
-
-
 @hypothesis.given(
     dt=dt_strategy, key=valid_zone_strategy, is_dst=hst.booleans()
 )
@@ -83,7 +67,7 @@ def _conditional_examples(cond, examples):
 @hypothesis.example(
     dt=datetime(2010, 11, 7, 1, 30), key="America/New_York", is_dst=False
 )
-@_conditional_examples(
+@conditional_examples(
     not PY2,
     [
         hypothesis.example(
@@ -128,7 +112,7 @@ def test_localize_explicit_is_dst(dt, key, is_dst):
 @hypothesis.example(dt=datetime(2018, 10, 28, 1, 30), key="Europe/London")
 @hypothesis.example(dt=datetime(2004, 4, 4, 2, 30), key="America/New_York")
 @hypothesis.example(dt=datetime(2004, 10, 31, 1, 30), key="America/New_York")
-@_conditional_examples(
+@conditional_examples(
     not PY2,
     examples=[
         hypothesis.example(

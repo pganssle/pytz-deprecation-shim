@@ -118,3 +118,20 @@ def assert_dt_offset(dt, offset):
     assert dt.tzname() == offset.tzname
     assert dt.utcoffset() == offset.utcoffset
     assert dt.dst() == offset.dst
+
+
+def conditional_examples(cond, examples):
+    if not cond:
+
+        def _(f):
+            return f
+
+    else:
+
+        def _(f):
+            f_out = f
+            for example in examples:
+                f_out = example(f_out)
+            return f_out
+
+    return _
