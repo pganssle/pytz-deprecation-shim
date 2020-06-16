@@ -3,7 +3,7 @@ This module contains helper functions to ease the transition from ``pytz`` to
 another :pep:`495`-compatible library.
 """
 from . import _common, _compat
-from ._impl import _BasePytzShimTimezone
+from ._impl import _PytzShimTimezone
 
 _PYTZ_BASE_CLASSES = None
 
@@ -57,7 +57,7 @@ def upgrade_tzinfo(tz):
         A :pep:`495`-compatible equivalent of any ``pytz`` or shim
         class, or the original object.
     """
-    if isinstance(tz, _BasePytzShimTimezone):
+    if isinstance(tz, _PytzShimTimezone):
         return tz._zone
 
     if is_pytz_zone(tz):
