@@ -1,3 +1,5 @@
+import copy
+import pickle
 from datetime import datetime, timedelta, tzinfo
 
 import hypothesis
@@ -24,6 +26,29 @@ from ._common import (
 
 ONE_SECOND = timedelta(seconds=1)
 ARBITRARY_KEY_STRATEGY = hst.from_regex("[a-zA-Z][a-zA-Z_]+(/[a-zA-Z_]+)+")
+
+
+def _make_no_cache_timezone():
+    if PY2:
+        import dateutil.tz
+
+        def no_cache_timezone(key, tz=dateutil.tz):
+            return pds.wrap_zone(tz.gettz.nocache(key), key)
+
+    else:
+        try:
+            import zoneinfo
+        except ImportError:
+            from backports import zoneinfo
+
+        def no_cache_timezone(key, zoneinfo=zoneinfo):
+            return pds.wrap_zone(zoneinfo.ZoneInfo.no_cache(key), key)
+
+    return no_cache_timezone
+
+
+no_cache_timezone = _make_no_cache_timezone()
+del _make_no_cache_timezone
 
 
 def test_fixed_offset_utc():
@@ -221,6 +246,7 @@ def test_folds_from_utc(key, dt_utc, expected_fold):
 SHIM_ZONE_STRATEGY = hst.one_of(
     [
         valid_zone_strategy.map(pds.timezone),
+        valid_zone_strategy.map(no_cache_timezone),
         offset_minute_strategy.map(pds.fixed_offset_timezone),
         hst.just(pds.UTC),
     ]
@@ -288,6 +314,60 @@ def test_wrap_zone_new_key(shim_zone, key):
 
     assert str(new_shim) == key
     assert str(shim_zone) == original_key
+
+
+@hypothesis.given(shim_zone=SHIM_ZONE_STRATEGY)
+@pytest.mark.parametrize("copy_func", [copy.copy, copy.deepcopy,])
+def test_copy(copy_func, shim_zone):
+    shim_copy = copy_func(shim_zone)
+
+    assert shim_copy is shim_zone
+
+
+@hypothesis.given(shim_zone=SHIM_ZONE_STRATEGY, dt=dt_strategy)
+@hypothesis.example(
+    shim_zone=pds.timezone("America/New_York"), dt=datetime(2020, 11, 1, 1, 30)
+)
+@hypothesis.example(
+    shim_zone=no_cache_timezone("America/New_York"),
+    dt=datetime(2020, 11, 1, 1, 30),
+)
+@hypothesis.example(
+    shim_zone=pds.timezone("America/New_York"),
+    dt=enfold(datetime(2020, 11, 1, 1, 30), fold=1),
+)
+def test_pickle_round_trip(shim_zone, dt):
+    """Test that the results of a pickle round trip are identical to inputs.
+
+    Ideally we would want some metric of equality on the pickled objects
+    themselves, but with time zones object equality is usually equivalent to
+    object identity, and that is not universally preserved in pickle round
+    tripping on all Python versions and for all zones.
+    """
+    shim_copy = pickle.loads(pickle.dumps(shim_zone))
+
+    dt = dt.replace(tzinfo=shim_zone)
+    dt_rt = dt.replace(tzinfo=shim_copy)
+
+    # PEP 495 says that an inter-zone comparison between ambiguous datetimes is
+    # always False.
+    if shim_zone is not shim_copy and dt != dt_rt:
+        assert dt.dst() == dt_rt.dst()
+        assert dt.utcoffset() == dt_rt.utcoffset()
+        assert pds._compat.is_ambiguous(dt) and pds._compat.is_ambiguous(dt_rt)
+        return
+
+    assert_dt_equivalent(dt, dt_rt)
+
+
+@hypothesis.given(key=valid_zone_strategy)
+@pytest.mark.skipif(PY2, reason="Singleton behavior is different in Python 2")
+def test_pickle_returns_same_object(key):
+    shim_zone = pds.timezone(key)
+
+    shim_copy = pickle.loads(pickle.dumps(shim_zone))
+
+    assert shim_zone is shim_copy
 
 
 def test_utc_alias():
