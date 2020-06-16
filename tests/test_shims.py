@@ -26,6 +26,29 @@ ONE_SECOND = timedelta(seconds=1)
 ARBITRARY_KEY_STRATEGY = hst.from_regex("[a-zA-Z][a-zA-Z_]+(/[a-zA-Z_]+)+")
 
 
+def _make_no_cache_timezone():
+    if PY2:
+        import dateutil.tz
+
+        def no_cache_timezone(key, tz=dateutil.tz):
+            return pds.wrap_zone(tz.gettz.nocache(key), key)
+
+    else:
+        try:
+            import zoneinfo
+        except ImportError:
+            from backports import zoneinfo
+
+        def no_cache_timezone(key, zoneinfo=zoneinfo):
+            return pds.wrap_zone(zoneinfo.ZoneInfo.no_cache(key), key)
+
+    return no_cache_timezone
+
+
+no_cache_timezone = _make_no_cache_timezone()
+del _make_no_cache_timezone
+
+
 def test_fixed_offset_utc():
     """Tests that fixed_offset_timezone(0) always returns UTC."""
     assert pds.fixed_offset_timezone(0) is pds.UTC
@@ -221,6 +244,7 @@ def test_folds_from_utc(key, dt_utc, expected_fold):
 SHIM_ZONE_STRATEGY = hst.one_of(
     [
         valid_zone_strategy.map(pds.timezone),
+        valid_zone_strategy.map(no_cache_timezone),
         offset_minute_strategy.map(pds.fixed_offset_timezone),
         hst.just(pds.UTC),
     ]
