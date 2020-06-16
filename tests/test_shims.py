@@ -16,6 +16,8 @@ from ._common import (
     PY2,
     assert_dt_equivalent,
     assert_dt_offset,
+    conditional_examples,
+    datetime_unambiguous,
     dt_strategy,
     enfold,
     get_fold,
@@ -336,6 +338,19 @@ def test_copy(copy_func, shim_zone):
     shim_zone=pds.timezone("America/New_York"),
     dt=enfold(datetime(2020, 11, 1, 1, 30), fold=1),
 )
+@conditional_examples(
+    not PY2,
+    examples=[
+        hypothesis.example(
+            shim_zone=no_cache_timezone("America/New_York"),
+            dt=datetime(2020, 3, 8, 2, 30),
+        ),
+        hypothesis.example(
+            shim_zone=no_cache_timezone("America/New_York"),
+            dt=enfold(datetime(2020, 3, 8, 2, 30), fold=1),
+        ),
+    ],
+)
 def test_pickle_round_trip(shim_zone, dt):
     """Test that the results of a pickle round trip are identical to inputs.
 
@@ -349,12 +364,13 @@ def test_pickle_round_trip(shim_zone, dt):
     dt = dt.replace(tzinfo=shim_zone)
     dt_rt = dt.replace(tzinfo=shim_copy)
 
-    # PEP 495 says that an inter-zone comparison between ambiguous datetimes is
-    # always False.
+    # PEP 495 says that the result of an inter-zone comparison between
+    # datetimes where the offset depends on the fold is always False.
     if shim_zone is not shim_copy and dt != dt_rt:
         assert dt.dst() == dt_rt.dst()
         assert dt.utcoffset() == dt_rt.utcoffset()
-        assert pds._compat.is_ambiguous(dt) and pds._compat.is_ambiguous(dt_rt)
+        assert not datetime_unambiguous(dt)
+        assert not datetime_unambiguous(dt_rt)
         return
 
     assert_dt_equivalent(dt, dt_rt)

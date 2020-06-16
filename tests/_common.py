@@ -58,6 +58,10 @@ enfold = pds._compat.enfold
 get_fold = pds._compat.get_fold
 
 
+def datetime_unambiguous(dt):
+    return dt.utcoffset() == enfold(dt, fold=not get_fold(dt)).utcoffset()
+
+
 @lru_cache(128)
 def round_timedelta(td):
     """Truncates a timedelta to the nearest minute."""
