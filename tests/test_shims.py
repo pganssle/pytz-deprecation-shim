@@ -288,3 +288,7 @@ def test_wrap_zone_new_key(shim_zone, key):
 
     assert str(new_shim) == key
     assert str(shim_zone) == original_key
+
+
+def test_utc_alias():
+    assert pds.utc is pds.UTC
