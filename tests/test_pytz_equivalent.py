@@ -291,7 +291,7 @@ def assume_no_dst_inconsistency_bug(dt, key, is_dst=False):  # prama: nocover
         # Possibly another manifestation of dateutil/dateutil#1050
         hypothesis.assume(
             not (
-                key == "MET"
+                (key == "MET" or key == "CET")
                 and datetime(1916, 5, 1) <= dt <= datetime(1916, 10, 2)
             )
         )
