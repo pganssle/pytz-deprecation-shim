@@ -2,23 +2,29 @@ from ._common import pytz_imported
 
 
 class PytzUsageWarning(RuntimeWarning):
-    pass
+    """Warning raised when accessing features specific to ``pytz``'s interface.
+
+    This warning is used to direct users of ``pytz``-specific features like the
+    ``localize`` and ``normalize`` methods towards using the standard
+    ``tzinfo`` interface, so that these shims can be replaced with one of the
+    underlying libraries they are wrapping.
+    """
 
 
 class UnknownTimeZoneError(KeyError):
-    pass
+    """Raised when no time zone is found for a specified key."""
 
 
 class InvalidTimeError(Exception):
-    pass
+    """The base class for exceptions related to folds and gaps."""
 
 
 class AmbiguousTimeError(InvalidTimeError):
-    pass
+    """Exception raised when ``is_dst=None`` for an ambiguous time (fold)."""
 
 
 class NonExistentTimeError(InvalidTimeError):
-    pass
+    """Exception raised when ``is_dst=None`` for a non-existent time (gap)."""
 
 
 PYTZ_BASE_ERROR_MAPPING = {}

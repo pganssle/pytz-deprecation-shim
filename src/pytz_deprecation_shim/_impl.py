@@ -16,6 +16,20 @@ KEY_SENTINEL = object()
 
 
 def timezone(key, _cache={}):
+    """Builds an IANA database time zone shim.
+
+    This is the equivalent of ``pytz.timezone``.
+
+    :param key:
+        A valid key from the IANA time zone database.
+
+    :raises UnknownTimeZoneError:
+        If an unknown value is passed, this will raise an exception that can be
+        caught by :exc:`pytz_deprecation_shim.UnknownTimeZoneError` or
+        ``pytz.UnknownTimeZoneError``. Like
+        :exc:`zoneinfo.ZoneInfoNotFoundError`, both of those are subclasses of
+        :exc:`KeyError`.
+    """
     instance = _cache.get(key, None)
     if instance is None:
         if len(key) == 3 and key.lower() == "utc":
@@ -31,6 +45,21 @@ def timezone(key, _cache={}):
 
 
 def fixed_offset_timezone(offset, _cache={}):
+    """Builds a fixed offset time zone shim.
+
+    This is the equivalent of ``pytz.FixedOffset``. An alias is available as
+    ``pytz_deprecation_shim.FixedOffset`` as well.
+
+    :param offset:
+        A fixed offset from UTC, in minutes. This must be in the range ``-1439
+        <= offset <= 1439``.
+
+    :raises ValueError:
+        For offsets whose absolute value is greater than or equal to 24 hours.
+
+    :return:
+        A shim time zone.
+    """
     if not (-1440 < offset < 1440):
         raise ValueError("absolute offset is too large", offset)
 
@@ -46,7 +75,25 @@ def fixed_offset_timezone(offset, _cache={}):
 
 
 def build_tzinfo(zone, fp):
-    """A shim for pytz.build_tzinfo."""
+    """Builds a shim object from a TZif file.
+
+    This is a shim for ``pytz.build_tzinfo``. Given a value to use as the zone
+    IANA key and a file-like object containing a valid TZif file (i.e.
+    conforming to :rfc:`8536`), this builds a time zone object and wraps it in
+    a shim class.
+
+    The argument names are chosen to match those in ``pytz.build_tzinfo``.
+
+    :param zone:
+        A string to be used as the time zone object's IANA key.
+
+    :param fp:
+        A readable file-like object emitting bytes, pointing to a valid TZif
+        file.
+
+    :return:
+        A shim time zone.
+    """
     zone_file = _compat.get_timezone_file(fp)
 
     return wrap_zone(zone_file, key=zone)
@@ -61,7 +108,7 @@ def wrap_zone(tz, key=KEY_SENTINEL, _cache={}):
     to libraries expecting to use ``pytz``'s interface.
 
     :param tz:
-        A :pep:495-compatible time zone, such as those provided by
+        A :pep:`495`-compatible time zone, such as those provided by
         :mod:`dateutil.tz` or :mod:`zoneinfo`.
 
     :param key:
