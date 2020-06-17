@@ -6,6 +6,7 @@
    migration
    api
    helpers
+   changelog
 
 
 
