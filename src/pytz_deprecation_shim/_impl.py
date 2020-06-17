@@ -162,7 +162,10 @@ class _PytzShimTimezone(tzinfo):
         return dt_out.replace(tzinfo=self)
 
     def __str__(self):
-        return str(self._key)
+        if self._key is not None:
+            return str(self._key)
+        else:
+            return repr(self)
 
     def __repr__(self):
         return "%s(%s, %s)" % (
