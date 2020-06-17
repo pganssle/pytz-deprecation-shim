@@ -63,6 +63,12 @@ def test_timezone_utc_singleton(key):
     assert pds.timezone(key) is pds.UTC
 
 
+@hypothesis.given(minutes=offset_minute_strategy.filter(lambda m: m != 0))
+def test_str_fixed_offset(minutes):
+    shim_zone = pds.fixed_offset_timezone(minutes)
+    assert str(shim_zone) == repr(shim_zone)
+
+
 @hypothesis.given(key=valid_zone_strategy)
 def test_timezone_repr(key):
     zone = pds.timezone(key)
