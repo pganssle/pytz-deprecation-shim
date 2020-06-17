@@ -58,6 +58,10 @@ enfold = pds._compat.enfold
 get_fold = pds._compat.get_fold
 
 
+def datetime_unambiguous(dt):
+    return dt.utcoffset() == enfold(dt, fold=not get_fold(dt)).utcoffset()
+
+
 @lru_cache(128)
 def round_timedelta(td):
     """Truncates a timedelta to the nearest minute."""
@@ -118,3 +122,20 @@ def assert_dt_offset(dt, offset):
     assert dt.tzname() == offset.tzname
     assert dt.utcoffset() == offset.utcoffset
     assert dt.dst() == offset.dst
+
+
+def conditional_examples(cond, examples):
+    if not cond:
+
+        def _(f):
+            return f
+
+    else:
+
+        def _(f):
+            f_out = f
+            for example in examples:
+                f_out = example(f_out)
+            return f_out
+
+    return _

@@ -6,28 +6,18 @@
 
 # -- Path setup --------------------------------------------------------------
 
-import configparser
 import os
 
 
-def read_setup_cfg_version():
+def read_version():
     here = os.path.split(__file__)[0]
-    setup_cfg = os.path.join(here, "../setup.cfg")
+    version_file = os.path.join(here, "../VERSION")
 
-    config = configparser.ConfigParser()
-    config.read(setup_cfg)
-
-    version = None
-    if "metadata" in config.sections():
-        version = config["metadata"].get("version", None)
-
-    if version is None:
-        version = "<unknown>"
-
-    return version
+    with open(version_file, "rt") as f:
+        return f.read().strip()
 
 
-VERSION = read_setup_cfg_version()
+VERSION = read_version()
 
 
 # -- Project information -----------------------------------------------------
