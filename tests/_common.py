@@ -26,8 +26,8 @@ PY2 = sys.version_info[0] == 2
 ZERO = timedelta(0)
 UTC = pds._compat.UTC
 
-VALID_ZONES = sorted(pytz.all_timezones)
-VALID_ZONE_SET = set(VALID_ZONES)
+VALID_ZONES = tuple(sorted(pytz.all_timezones))
+VALID_ZONE_SET = frozenset(VALID_ZONES)
 
 # There will be known inconsistencies between pytz and the other libraries
 # right around the EPOCHALYPSE, because V1 files use 32-bit integers, and
