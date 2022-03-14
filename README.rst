@@ -6,7 +6,7 @@ longer the best option for providing time zones. ``pytz`` has a non-standard
 interface that is `very easy to misuse
 <https://blog.ganssle.io/articles/2018/03/pytz-fastest-footgun.html>`_; this
 interface was necessary when ``pytz`` was created, because ``datetime`` had no
-way to represent ambiguous datetimes, but this was solved in in Python 3.6,
+way to represent ambiguous datetimes, but this was solved in Python 3.6,
 which added a ``fold`` attribute to datetimes in `PEP 495
 <https://www.python.org/dev/peps/pep-0495/>`_. With the addition of the
 ``zoneinfo`` module in Python 3.9 (`PEP 615
